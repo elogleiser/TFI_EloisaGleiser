@@ -1,0 +1,29 @@
+# Unreal Engine
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Visual Studio
+.vs/
+
+# Rider / JetBrains
+.idea/
+*.sln.DotSettings.user
+*.DotSettings.user
+
+# Visual Studio user files
+*.suo
+*.user
+*.userprefs
+
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Backup files
+Backup/
+
+# Generated solution files
+*.sln
