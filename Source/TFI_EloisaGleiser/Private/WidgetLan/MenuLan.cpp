@@ -12,6 +12,7 @@ void UMenuLan::NativeOnInitialized()
 	
 	Button_Hostear->OnClicked.AddDynamic(this, &UMenuLan::OnButtonHostearClicked);
 	Button_Unirse->OnClicked.AddDynamic(this, &UMenuLan::OnButtonUnirseClicked);
+	BTN_Volver->OnClicked.AddDynamic(this, &UMenuLan::OnButtonVolverClicked);
 	
 	FInputModeUIOnly InputMode;
 	GetOwningPlayer()->SetInputMode(InputMode); 
@@ -35,4 +36,9 @@ void UMenuLan::OnButtonUnirseClicked()
 	
 	const FString IP = EditableTextBox_DireccionIP -> GetText().ToString();
 	UGameplayStatics::OpenLevel(this,*IP);
+}
+
+void UMenuLan::OnButtonVolverClicked()
+{
+	OnBackRequested.Broadcast();
 }

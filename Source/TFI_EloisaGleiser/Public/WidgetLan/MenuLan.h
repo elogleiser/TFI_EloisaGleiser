@@ -11,6 +11,7 @@
 /**
  * 
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLanBackRequested); 
 UCLASS()
 class TFI_ELOISAGLEISER_API UMenuLan : public UUserWidget
 {
@@ -19,6 +20,10 @@ class TFI_ELOISAGLEISER_API UMenuLan : public UUserWidget
 	
 public:
 	virtual void NativeOnInitialized() override;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Webs|Navigation")
+	FOnLanBackRequested OnBackRequested;
+	
 private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> Button_Hostear;
@@ -32,10 +37,16 @@ private:
 	UPROPERTY(EditDefaultsOnly)	
 	TSoftObjectPtr<UWorld> Level;
 	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> BTN_Volver;
+	
 	UFUNCTION()	
 	void OnButtonHostearClicked	();
 	
 	UFUNCTION()	
 	void OnButtonUnirseClicked	();
+	
+	UFUNCTION()
+	void OnButtonVolverClicked();
 
 };
