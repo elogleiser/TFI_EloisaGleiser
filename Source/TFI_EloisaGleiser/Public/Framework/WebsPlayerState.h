@@ -13,4 +13,17 @@ UCLASS()
 class TFI_ELOISAGLEISER_API AWebsPlayerState : public APlayerState
 {
 	GENERATED_BODY()
+	
+
+public:
+	AWebsPlayerState();
+
+	int32 GetCapturedZones() const { return CapturedZones; }
+
+
+protected:
+
+private:
+	UPROPERTY(VisibleAnywhere, Category = "Webs|Score")
+	int32 CapturedZones = 0;
 };

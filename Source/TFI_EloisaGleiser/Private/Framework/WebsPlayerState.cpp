@@ -2,3 +2,7 @@
 
 
 #include "Public/Framework/WebsPlayerState.h"
+
+AWebsPlayerState::AWebsPlayerState()
+{
+}

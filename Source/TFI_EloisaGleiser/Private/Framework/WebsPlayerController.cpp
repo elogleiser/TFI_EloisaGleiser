@@ -5,11 +5,14 @@
 #include "UI/WebsPauseMenu.h"
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
-
+#include "MultiplayerSessionsSubsystem.h"
+#include "Kismet/GameplayStatics.h"
+#include "UI/WebsCapturePuzzle.h"
 
 void AWebsPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	
 }
 
 
@@ -26,6 +29,32 @@ void AWebsPlayerController::SetupInputComponent()
 		}
 	}
 }
+
+void AWebsPlayerController::OpenCapturePuzzle()
+{
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	if (!CapturePuzzle && CapturePuzzleClass)
+	{
+		CapturePuzzle = CreateWidget<UWebsCapturePuzzle>(this,CapturePuzzleClass);
+	}
+
+	if (CapturePuzzle && !CapturePuzzle->IsInViewport())
+	{
+		CapturePuzzle->AddToViewport();
+
+		FInputModeGameAndUI InputMode;
+		InputMode.SetWidgetToFocus(CapturePuzzle->TakeWidget());
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+		SetInputMode(InputMode);
+		bShowMouseCursor = true;
+	}
+}
+
 void AWebsPlayerController::TogglePauseMenu()
 {
 	if (PauseMenu && PauseMenu->IsInViewport())
@@ -45,9 +74,12 @@ void AWebsPlayerController::OpenPauseMenu()
 		return;
 	}
 
-	if (!PauseMenu)
+	PauseMenu = CreateWidget<UWebsPauseMenu>(this, PauseMenuClass);
+
+	if (PauseMenu)
 	{
-		PauseMenu = CreateWidget<UWebsPauseMenu>(this, PauseMenuClass);
+		PauseMenu->OnResumeRequested.AddDynamic(this,&AWebsPlayerController::OnResumeRequested);
+		PauseMenu->OnMainMenuRequested.AddDynamic(this,&AWebsPlayerController::OnMainMenuRequested);
 	}
 
 	if (!PauseMenu)
@@ -75,4 +107,48 @@ void AWebsPlayerController::ClosePauseMenu()
 	FInputModeGameOnly InputMode;
 	SetInputMode(InputMode);
 	SetShowMouseCursor(false);
+}
+
+void AWebsPlayerController::OnResumeRequested()
+{
+	ClosePauseMenu();
+}
+
+void AWebsPlayerController::OnMainMenuRequested()
+{
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		if (UMultiplayerSessionsSubsystem* SessionsSubsystem =GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>())
+		{
+			SessionsSubsystem->MultijugadorAlDestruirSesionCompletada.AddDynamic(this,&AWebsPlayerController::OnSessionDestroyed);
+
+			SessionsSubsystem->DestruirSesion();
+			return;
+		}
+	}
+
+	ReturnToMainMenu();
+}
+
+void AWebsPlayerController::OnSessionDestroyed(bool bWasSuccessful)
+{
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		if (UMultiplayerSessionsSubsystem* SessionsSubsystem =GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>())
+		{
+			SessionsSubsystem->MultijugadorAlDestruirSesionCompletada.RemoveDynamic(this,&AWebsPlayerController::OnSessionDestroyed);
+		}
+	}
+
+	ReturnToMainMenu();
+}
+
+void AWebsPlayerController::ReturnToMainMenu()
+{
+	UGameplayStatics::OpenLevel(this,FName(TEXT("L_MainMenu")));
+}
+
+void AWebsPlayerController::ClientOpenCapturePuzzle_Implementation()
+{
+	OpenCapturePuzzle();
 }

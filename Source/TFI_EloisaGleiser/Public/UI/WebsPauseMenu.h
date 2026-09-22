@@ -11,11 +11,17 @@
  */
 
 class UButton;
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnResumeRequested);	
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMainMenuRequested);
 UCLASS()
 class TFI_ELOISAGLEISER_API UWebsPauseMenu : public UUserWidget
 {
 	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Webs|Navigation")
+	FOnResumeRequested OnResumeRequested;
+	UPROPERTY(BlueprintAssignable, Category = "Webs|Navigation")
+	FOnMainMenuRequested OnMainMenuRequested;
 	
 protected:
 	virtual void NativeOnInitialized() override;

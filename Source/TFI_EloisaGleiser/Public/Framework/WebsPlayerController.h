@@ -12,6 +12,7 @@
 
 class UInputAction;
 class UWebsPauseMenu;
+class UWebsCapturePuzzle;
 
 UCLASS()
 class TFI_ELOISAGLEISER_API AWebsPlayerController : public ATFI_EloisaGleiserPlayerController
@@ -20,10 +21,23 @@ class TFI_ELOISAGLEISER_API AWebsPlayerController : public ATFI_EloisaGleiserPla
 	
 public:
 	virtual void SetupInputComponent() override;
+	
+	void OpenCapturePuzzle();
+	
+	UFUNCTION(Client, Reliable)
+	void ClientOpenCapturePuzzle();
+
 
 protected:
+	
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Webs|UI")
+	TSubclassOf<UWebsCapturePuzzle> CapturePuzzleClass;
+
+	UPROPERTY()
+	TObjectPtr<UWebsCapturePuzzle> CapturePuzzle;
+	
 private:
 	// Blueprint del Pause Menu que se elige desde ue
 	UPROPERTY(EditDefaultsOnly, Category = "Webs|UI")
@@ -40,5 +54,18 @@ private:
 	void TogglePauseMenu();
 
 	void OpenPauseMenu();
+	
 	void ClosePauseMenu();
+	
+	UFUNCTION()
+	void OnResumeRequested();
+	
+	UFUNCTION()
+	void OnMainMenuRequested();
+
+	UFUNCTION()
+	void OnSessionDestroyed(bool bWasSuccessful);
+
+	void ReturnToMainMenu();
+	
 };
