@@ -8,6 +8,8 @@
 #include "MultiplayerSessionsSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/WebsCapturePuzzle.h"
+#include "GameFramework/Character.h"
+#include "Components/SkeletalMeshComponent.h"
 
 void AWebsPlayerController::BeginPlay()
 {
@@ -23,10 +25,12 @@ void AWebsPlayerController::SetupInputComponent()
 
 	if (UEnhancedInputComponent* EnhancedInput =Cast<UEnhancedInputComponent>(InputComponent))
 	{
+		
 		if (PauseAction)
 		{
 			EnhancedInput->BindAction(PauseAction,ETriggerEvent::Started,this,&AWebsPlayerController::TogglePauseMenu);
 		}
+		
 	}
 }
 

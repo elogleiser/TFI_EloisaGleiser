@@ -37,6 +37,7 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UWebsCapturePuzzle> CapturePuzzle;
+
 	
 private:
 	// Blueprint del Pause Menu que se elige desde ue
