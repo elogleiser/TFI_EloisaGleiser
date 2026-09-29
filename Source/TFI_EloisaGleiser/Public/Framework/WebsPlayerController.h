@@ -13,6 +13,8 @@
 class UInputAction;
 class UWebsPauseMenu;
 class UWebsCapturePuzzle;
+class ACaptureZone;
+class UWebsHUDWidget;
 
 UCLASS()
 class TFI_ELOISAGLEISER_API AWebsPlayerController : public ATFI_EloisaGleiserPlayerController
@@ -20,12 +22,38 @@ class TFI_ELOISAGLEISER_API AWebsPlayerController : public ATFI_EloisaGleiserPla
 	GENERATED_BODY()
 	
 public:
+	
+	UPROPERTY()
+	TObjectPtr<ACaptureZone> CurrentCaptureZone;
+	
+	
 	virtual void SetupInputComponent() override;
 	
 	void OpenCapturePuzzle();
 	
+	void CloseCapturePuzzle();
+	
+	UFUNCTION()
+	void OnCapturePuzzleExitRequested();
+	
+	UFUNCTION()
+	void OnCapturePuzzleCompleted();
+	
 	UFUNCTION(Client, Reliable)
-	void ClientOpenCapturePuzzle();
+	void ClientOpenCapturePuzzle(ACaptureZone* CaptureZone);
+	
+	UFUNCTION(Server, Reliable)
+	void ServerCompleteCapture(ACaptureZone* CaptureZone);
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Webs|UI")
+	TSubclassOf<UWebsHUDWidget> HUDWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UWebsHUDWidget> HUDWidget;
+	
+	void UpdateCapturedZonesHUD(int32 NewCapturedZones);
+	
+	void UpdateScoreboardHUD();
 
 
 protected:

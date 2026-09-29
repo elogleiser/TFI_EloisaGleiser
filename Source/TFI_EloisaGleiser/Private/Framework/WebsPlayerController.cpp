@@ -10,13 +10,27 @@
 #include "UI/WebsCapturePuzzle.h"
 #include "GameFramework/Character.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Gameplay/CaptureZone.h"
+#include "Framework/WebsPlayerState.h"
+#include "UI/WebsHUDWidget.h"
+
+
 
 void AWebsPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	
-}
+	if (HUDWidgetClass)
+	{
+		HUDWidget = CreateWidget<UWebsHUDWidget>(this,HUDWidgetClass);
 
+		if (HUDWidget)
+		{
+			HUDWidget->AddToViewport();
+			HUDWidget->UpdateScoreboard();
+		}
+	}
+}
 
 
 void AWebsPlayerController::SetupInputComponent()
@@ -45,6 +59,19 @@ void AWebsPlayerController::OpenCapturePuzzle()
 	{
 		CapturePuzzle = CreateWidget<UWebsCapturePuzzle>(this,CapturePuzzleClass);
 	}
+	
+	if (CapturePuzzle)
+	{
+		CapturePuzzle->OnExitRequested.AddUniqueDynamic(
+			this,
+			&AWebsPlayerController::OnCapturePuzzleExitRequested
+		);
+		CapturePuzzle->OnPuzzleCompleted.AddUniqueDynamic(
+	   this,
+	   &AWebsPlayerController::OnCapturePuzzleCompleted
+   );
+	}
+	
 
 	if (CapturePuzzle && !CapturePuzzle->IsInViewport())
 	{
@@ -58,6 +85,82 @@ void AWebsPlayerController::OpenCapturePuzzle()
 		bShowMouseCursor = true;
 	}
 }
+
+void AWebsPlayerController::CloseCapturePuzzle()
+{
+	if (CapturePuzzle && CapturePuzzle->IsInViewport())
+	{
+		CapturePuzzle->RemoveFromParent();
+	}
+
+	FInputModeGameOnly InputMode;
+	SetInputMode(InputMode);
+
+	bShowMouseCursor = false;
+}
+
+void AWebsPlayerController::OnCapturePuzzleExitRequested()
+{
+	CloseCapturePuzzle();
+
+	CurrentCaptureZone = nullptr;
+}
+
+void AWebsPlayerController::OnCapturePuzzleCompleted()
+{
+	if (!CurrentCaptureZone)
+	{
+		return;
+	}
+
+	ServerCompleteCapture(CurrentCaptureZone);
+
+	CloseCapturePuzzle();
+
+	CurrentCaptureZone = nullptr;
+}
+
+void AWebsPlayerController::ClientOpenCapturePuzzle_Implementation(ACaptureZone* CaptureZone)
+{
+	CurrentCaptureZone = CaptureZone;
+
+	OpenCapturePuzzle();
+}
+
+void AWebsPlayerController::ServerCompleteCapture_Implementation(ACaptureZone* CaptureZone)
+{
+	if (!CaptureZone)
+	{
+		return;
+	}
+
+	AWebsPlayerState* WebsPlayerState =
+		GetPlayerState<AWebsPlayerState>();
+
+	if (!WebsPlayerState)
+	{
+		return;
+	}
+
+	if (!CaptureZone->IsOccupiedBy(WebsPlayerState))
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				5.0f,
+				FColor::Red,
+				TEXT("SERVER | Capture rejected: player is not occupying zone")
+			);
+		}
+
+		return;
+	}
+
+	CaptureZone->CaptureZone(WebsPlayerState);
+	
+}
+
 
 void AWebsPlayerController::TogglePauseMenu()
 {
@@ -152,7 +255,28 @@ void AWebsPlayerController::ReturnToMainMenu()
 	UGameplayStatics::OpenLevel(this,FName(TEXT("L_MainMenu")));
 }
 
-void AWebsPlayerController::ClientOpenCapturePuzzle_Implementation()
+void AWebsPlayerController::UpdateCapturedZonesHUD(int32 NewCapturedZones)
 {
-	OpenCapturePuzzle();
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	if (HUDWidget)
+	{
+		HUDWidget->UpdateCapturedZones(NewCapturedZones);
+	}
+}
+
+void AWebsPlayerController::UpdateScoreboardHUD()
+{
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	if (HUDWidget)
+	{
+		HUDWidget->UpdateScoreboard();
+	}
 }

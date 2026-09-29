@@ -84,12 +84,7 @@ void ACaptureZone::OnCaptureAreaBeginOverlap(UPrimitiveComponent* OverlappedComp
 
 	if (WebsController)
 	{
-		WebsController->ClientOpenCapturePuzzle();
-	}
-	
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Green,FString::Printf(TEXT("Zone locked | Character: %s | PlayerState: %s"),*CharacterInZone->GetName(),*OccupyingPlayer->GetName()));
+		WebsController->ClientOpenCapturePuzzle(this);
 	}
 	
 }
@@ -97,17 +92,27 @@ void ACaptureZone::OnCaptureAreaBeginOverlap(UPrimitiveComponent* OverlappedComp
 void ACaptureZone::OnCaptureAreaEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	ACharacter* LeavingCharacter = Cast<ACharacter>(OtherActor);
 
 	if (!LeavingCharacter)
 	{
 		return;
 	}
-	
-	if (GEngine)
+
+	// solo libera la zona si sale el jugador que la estaba ocupando
+	if (LeavingCharacter != CharacterInZone)
 	{
-		GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Yellow,TEXT("CharacterInZone cleared"));
+		return;
 	}
+
+	CharacterInZone = nullptr;
+	OccupyingPlayer = nullptr;
+	
 	
 }
 
@@ -115,25 +120,51 @@ void ACaptureZone::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ACaptureZone, OccupyingPlayer);
+	
+	DOREPLIFETIME(ACaptureZone, OwningPlayer);
 
 }
 
 void ACaptureZone::OnRep_OccupyingPlayer()
 {
-	if (GEngine)
-	{
-		const FString PlayerName = OccupyingPlayer
-			? OccupyingPlayer->GetName()
-			: TEXT("None");
+}
 
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			5.0f,
-			FColor::Cyan,
-			FString::Printf(
-				TEXT("CLIENT received OccupyingPlayer: %s"),
-				*PlayerName
-			)
-		);
+void ACaptureZone::OnRep_OwningPlayer()
+{
+}
+
+void ACaptureZone::CaptureZone(AWebsPlayerState* CapturingPlayer)
+{
+	if (!HasAuthority())
+	{
+		return;
 	}
+
+	if (!CapturingPlayer)
+	{
+		return;
+	}
+
+	// La zona ya pertenece a este mismo jugador
+	if (OwningPlayer == CapturingPlayer)
+	{
+		return;
+	}
+
+	// si era de otro jugador, ese jugador pierde la zona
+	if (OwningPlayer)
+	{
+		OwningPlayer->RemoveCapturedZone();
+	}
+
+	// asigna nuevo dueño
+	OwningPlayer = CapturingPlayer;
+
+	// nuevo dueño suma una zona
+	CapturingPlayer->AddCapturedZone();
+}
+
+bool ACaptureZone::IsOccupiedBy(const AWebsPlayerState* PlayerState) const
+{
+	return OccupyingPlayer == PlayerState;
 }

@@ -17,13 +17,28 @@ class TFI_ELOISAGLEISER_API AWebsPlayerState : public APlayerState
 
 public:
 	AWebsPlayerState();
-
+	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	int32 GetCapturedZones() const { return CapturedZones; }
+
+	void AddCapturedZone();
+	
+	void RemoveCapturedZone();
+	
+
 
 
 protected:
 
 private:
-	UPROPERTY(VisibleAnywhere, Category = "Webs|Score")
+	UPROPERTY(ReplicatedUsing = OnRep_CapturedZones, VisibleAnywhere, Category = "Webs|Score")
 	int32 CapturedZones = 0;
+
+	void UpdateLocalHUD();
+	
+	void UpdateLocalScoreboard();
+	
+	UFUNCTION()
+	void OnRep_CapturedZones();
 };
