@@ -13,6 +13,7 @@
 class UButton;
 class UWidgetSwitcher;
 class UMenuLan;
+class UMenu;
 class UWebsOnlineMenu;	
 
 

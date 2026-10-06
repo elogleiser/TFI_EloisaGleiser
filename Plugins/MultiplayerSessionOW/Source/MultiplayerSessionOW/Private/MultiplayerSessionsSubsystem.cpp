@@ -17,6 +17,7 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem() :
 
 void UMultiplayerSessionsSubsystem::CrearSesion(int32 NumConexionesPublicas, FString TipoPartida)
 {
+	
 	if (!EsValidaInterfazSesion())
 	{
 		return;
@@ -30,6 +31,7 @@ void UMultiplayerSessionsSubsystem::CrearSesion(int32 NumConexionesPublicas, FSt
 		UltimoTipoPartida = TipoPartida;
 
 		DestruirSesion();
+		return;
 		// Nota: retornamos aqui? el flujo original no retornaba; se mantiene igual.
 	}
 
@@ -118,7 +120,7 @@ void UMultiplayerSessionsSubsystem::DestruirSesion()
 
 void UMultiplayerSessionsSubsystem::IniciarSesion()
 {
-	// (vacío, igual que el original)
+	// (vacï¿½o, igual que el original)
 }
 
 bool UMultiplayerSessionsSubsystem::EsValidaInterfazSesion()
@@ -186,5 +188,5 @@ void UMultiplayerSessionsSubsystem::AlDestruirSesionCompletada(FName NombreSesio
 
 void UMultiplayerSessionsSubsystem::AlIniciarSesionCompletada(FName NombreSesion, bool bFueExitoso)
 {
-	// (vacío, igual que el original)
+	// (vacï¿½o, igual que el original)
 }

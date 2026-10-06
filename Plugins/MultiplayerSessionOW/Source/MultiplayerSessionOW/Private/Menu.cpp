@@ -213,6 +213,7 @@ void UMenu::AlIniciarSesion(bool /*bFueExitoso*/)
 
 void UMenu::BotonHostClickeado()
 {
+	
 	if (BotonHost) BotonHost->SetIsEnabled(false);
 
 	// FIX: obtener texto escrito, no el nombre del objeto

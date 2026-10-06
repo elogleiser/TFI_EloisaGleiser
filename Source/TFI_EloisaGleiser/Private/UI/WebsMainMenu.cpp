@@ -51,6 +51,14 @@ void UWebsMainMenu::OnOnlineClicked()
 	{
 		WS_MainMenu->SetActiveWidgetIndex(1);
 	}
+	if (WBP_MenuWidgetOW)
+	{
+		WBP_MenuWidgetOW->ConfigurarMenu(
+			4,
+			TEXT("Webs"),
+			TEXT("/Game/Maps/Lobby")
+		);
+	}
 }
 
 void UWebsMainMenu::OnLanClicked()

@@ -19,6 +19,7 @@ public class TFI_EloisaGleiser : ModuleRules
 			"GameplayStateTreeModule",
 			"UMG",
 			"Slate",
+			"SlateCore",
 			"MultiplayerSessionOW"
 		});
 
