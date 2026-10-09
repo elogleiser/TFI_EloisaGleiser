@@ -4,11 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Gameplay/WebPatterns/WebPatternDefinition.h"
 #include "WebsDrawingCanvas.generated.h"
 
 /**
  * 
  */
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDrawingFinished,float,Accuracy);
+
 UCLASS()
 class TFI_ELOISAGLEISER_API UWebsDrawingCanvas : public UUserWidget
 {
@@ -23,6 +27,18 @@ public:
 	{
 		return DrawnPoints;
 	}
+	
+	UFUNCTION(BlueprintCallable, Category="Webs|Drawing")
+	void SetPattern(UWebPatternDefinition* NewPattern);
+	
+	UFUNCTION(BlueprintCallable, Category="Webs|Drawing")
+	float CalculateAccuracy() const;
+	
+	UPROPERTY(BlueprintAssignable, Category="Webs|Drawing")
+	FOnDrawingFinished OnDrawingFinished;
+	
+	UFUNCTION(BlueprintCallable, Category="Webs|Drawing")
+	float GetRequiredAccuracy() const;
 	
 protected:
 
@@ -39,5 +55,10 @@ private:
 	TArray<FVector2D> DrawnPoints;
 	
 	bool bIsDrawing = false;
+	
+	UPROPERTY()
+	TObjectPtr<UWebPatternDefinition> CurrentPattern;
+
+	static float DistanceToSegment(const FVector2D& Point,const FVector2D& SegmentStart,const FVector2D& SegmentEnd);
 	
 };

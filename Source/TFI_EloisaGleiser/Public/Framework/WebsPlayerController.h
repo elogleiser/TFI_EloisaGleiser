@@ -54,6 +54,15 @@ public:
 	void UpdateCapturedZonesHUD(int32 NewCapturedZones);
 	
 	void UpdateScoreboardHUD();
+	
+	UFUNCTION()
+	void HandleSilkChanged(int32 CurrentSilk, int32 MaxSilk);
+
+	void InitializeSilkHUD();
+	
+	virtual void OnRep_Pawn() override;
+	
+	virtual void OnPossess(APawn* InPawn) override;
 
 
 protected:

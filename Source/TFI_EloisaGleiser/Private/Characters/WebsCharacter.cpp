@@ -2,13 +2,16 @@
 
 
 #include "Public/Characters/WebsCharacter.h"
+#include "Gameplay/WebsSilkComponent.h"
 
 
 // Sets default values
 AWebsCharacter::AWebsCharacter()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
+	
+	SilkComponent = CreateDefaultSubobject<UWebsSilkComponent>(TEXT("SilkComponent"));
 }
 
 // Called when the game starts or when spawned

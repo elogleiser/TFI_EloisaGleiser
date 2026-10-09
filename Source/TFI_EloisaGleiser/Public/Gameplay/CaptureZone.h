@@ -9,6 +9,7 @@
 class UBoxComponent;
 class ACharacter;
 class AWebsPlayerState;
+class UWebPatternDefinition;
 
 
 UCLASS()
@@ -26,12 +27,22 @@ public:
 	
 	bool IsOccupiedBy(const AWebsPlayerState* PlayerState) const;
 	
+	UWebPatternDefinition* GetWebPattern() const
+	{
+		return WebPattern;
+	}
+	
 public:
 	virtual void Tick(float DeltaTime) override;
 	
 protected:
+	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Webs|Puzzle")
+	TObjectPtr<UWebPatternDefinition> WebPattern;
+	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Webs|Capture Zone")
 	TObjectPtr<UBoxComponent> CaptureArea;

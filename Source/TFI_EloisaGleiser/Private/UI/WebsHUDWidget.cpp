@@ -5,21 +5,19 @@
 #include "Components/TextBlock.h"
 #include "Framework/WebsGameState.h"
 #include "Framework/WebsPlayerState.h"
+#include "Components/ProgressBar.h"
 
 void UWebsHUDWidget::UpdateCapturedZones(int32 NewCapturedZones)
 {
 	if (TXT_CapturedZones)
 	{
-		TXT_CapturedZones->SetText(
-			FText::AsNumber(NewCapturedZones)
-		);
+		TXT_CapturedZones->SetText(FText::AsNumber(NewCapturedZones));
 	}
 }
 
 void UWebsHUDWidget::UpdateScoreboard()
 {
-	AWebsGameState* WebsGameState =
-		GetWorld()->GetGameState<AWebsGameState>();
+	AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
 
 	if (!WebsGameState)
 	{
@@ -43,8 +41,7 @@ void UWebsHUDWidget::UpdateScoreboard()
 		}
 	}
 
-	const TArray<APlayerState*>& Players =
-		WebsGameState->PlayerArray;
+	const TArray<APlayerState*>& Players =WebsGameState->PlayerArray;
 
 	for (int32 i = 0; i < Players.Num() && i < PlayerTexts.Num(); i++)
 	{
@@ -55,18 +52,26 @@ void UWebsHUDWidget::UpdateScoreboard()
 			continue;
 		}
 
-		const FString ScoreText = FString::Printf(
-			TEXT("Player %d: %d"),
-			i + 1,
-			WebsPlayerState->GetCapturedZones()
-		);
+		const FString ScoreText = FString::Printf(TEXT("Player %d: %d"),i + 1,WebsPlayerState->GetCapturedZones());
 
-		PlayerTexts[i]->SetText(
-			FText::FromString(ScoreText)
-		);
+		PlayerTexts[i]->SetText(FText::FromString(ScoreText));
 
-		PlayerTexts[i]->SetVisibility(
-			ESlateVisibility::Visible
-		);
+		PlayerTexts[i]->SetVisibility(ESlateVisibility::Visible);
 	}
+}
+
+void UWebsHUDWidget::UpdateSilk(int32 CurrentSilk, int32 MaxSilk)
+{
+	if (PB_Silk)
+	{
+		const float SilkPercent = MaxSilk > 0? static_cast<float>(CurrentSilk) / MaxSilk: 0.0f;
+
+		PB_Silk->SetPercent(SilkPercent);
+	}
+
+	if (TXT_Silk)
+	{
+		TXT_Silk->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"),CurrentSilk,MaxSilk)));
+	}
+
 }

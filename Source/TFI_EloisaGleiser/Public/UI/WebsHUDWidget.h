@@ -12,6 +12,7 @@
 
 class UTextBlock;
 class AWebsPlayerState;
+class UProgressBar;
 
 UCLASS()
 class TFI_ELOISAGLEISER_API UWebsHUDWidget : public UUserWidget
@@ -22,6 +23,8 @@ public:
 	void UpdateCapturedZones(int32 NewCapturedZones);
 
 	void UpdateScoreboard();
+	
+	void UpdateSilk(int32 CurrentSilk, int32 MaxSilk);
 
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -38,6 +41,12 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> TXT_Player4;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UProgressBar> PB_Silk;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> TXT_Silk;
 	
 	
 };

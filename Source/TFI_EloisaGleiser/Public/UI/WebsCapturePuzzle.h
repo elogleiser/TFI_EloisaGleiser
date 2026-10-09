@@ -11,6 +11,8 @@
  */
 
 class UButton;
+class UWebPatternDefinition;
+class UWebsDrawingCanvas;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCapturePuzzleExitRequested);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCapturePuzzleCompleted);
@@ -27,9 +29,20 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Webs|Puzzle")
 	FOnCapturePuzzleCompleted OnPuzzleCompleted;
-
+	
+	void SetWebPattern(UWebPatternDefinition* NewPattern);
+	
 protected:
 	virtual void NativeOnInitialized() override;
+	
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<class UWebsDrawingCanvas> DrawingCanvas;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<class UTextBlock> TXT_Accuracy;
+
+	UFUNCTION()
+	void HandleDrawingFinished(float Accuracy);
 
 private:
 	UPROPERTY(meta = (BindWidget))
