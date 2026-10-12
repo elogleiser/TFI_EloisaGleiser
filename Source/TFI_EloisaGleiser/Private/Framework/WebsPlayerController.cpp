@@ -16,7 +16,8 @@
 #include "Gameplay/WebsSilkComponent.h"
 #include "Gameplay/WebPatterns/WebPatternDefinition.h"
 #include "Characters/WebsCharacter.h"
-
+#include "Gameplay/WebPatterns/WebPatternValidator.h"
+#include "Framework/WebsPlayerState.h"
 
 
 void AWebsPlayerController::BeginPlay()
@@ -62,6 +63,24 @@ void AWebsPlayerController::OpenCapturePuzzle()
 	{
 		return;
 	}
+	
+	AWebsPlayerState* WebsPlayerState = GetPlayerState<AWebsPlayerState>();
+
+	if (!WebsPlayerState)
+	{
+		return;
+	}
+
+	// La zona ya pertenece a este jugador
+	if (CurrentCaptureZone->GetOwningPlayer() == WebsPlayerState)
+	{
+		if (HUDWidget)
+		{
+			HUDWidget->ShowCaptureMessage(TEXT("This zone is already yours!"),false);
+		}
+
+		return;
+	}
 
 	// Obtener el componente de seda
 	UWebsSilkComponent* SilkComponent =WebsCharacter->GetSilkComponent();
@@ -84,9 +103,9 @@ void AWebsPlayerController::OpenCapturePuzzle()
 
 	if (!SilkComponent->HasEnoughSilk(SilkCost))
 	{
-		if (GEngine)
+		if (HUDWidget)
 		{
-			GEngine->AddOnScreenDebugMessage(-1,3.0f,FColor::Red,TEXT("Not enough silk to capture this zone!"));
+			HUDWidget->ShowCaptureMessage(TEXT("Not enough silk!"),false);
 		}
 
 		return;
@@ -147,18 +166,15 @@ void AWebsPlayerController::OnCapturePuzzleExitRequested()
 	CurrentCaptureZone = nullptr;
 }
 
-void AWebsPlayerController::OnCapturePuzzleCompleted()
+void AWebsPlayerController::OnCapturePuzzleCompleted(const TArray<FVector2D>& DrawnPoints)
 {
 	if (!CurrentCaptureZone)
 	{
 		return;
 	}
 
-	ServerCompleteCapture(CurrentCaptureZone);
+	ServerCompleteCapture(CurrentCaptureZone, DrawnPoints);
 
-	CloseCapturePuzzle();
-
-	CurrentCaptureZone = nullptr;
 }
 
 void AWebsPlayerController::ClientOpenCapturePuzzle_Implementation(ACaptureZone* CaptureZone)
@@ -168,7 +184,7 @@ void AWebsPlayerController::ClientOpenCapturePuzzle_Implementation(ACaptureZone*
 	OpenCapturePuzzle();
 }
 
-void AWebsPlayerController::ServerCompleteCapture_Implementation(ACaptureZone* CaptureZone)
+void AWebsPlayerController::ServerCompleteCapture_Implementation(ACaptureZone* CaptureZone, const TArray<FVector2D>& DrawnPoints)
 {
 	if (!CaptureZone)
 	{
@@ -184,22 +200,16 @@ void AWebsPlayerController::ServerCompleteCapture_Implementation(ACaptureZone* C
 
 	if (!CaptureZone->IsOccupiedBy(WebsPlayerState))
 	{
-		if (GEngine)
+		if (HUDWidget)
 		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				5.0f,
-				FColor::Red,
-				TEXT("SERVER | Capture rejected: player is not occupying zone")
-			);
+			HUDWidget->ShowCaptureMessage(TEXT("Capture rejected: player is not occupying zone!"),false);
 		}
-
+		
 		return;
 	}
 	
 	// Obtener nuestro Character
-	AWebsCharacter* WebsCharacter =
-		Cast<AWebsCharacter>(GetPawn());
+	AWebsCharacter* WebsCharacter =Cast<AWebsCharacter>(GetPawn());
 
 	if (!WebsCharacter)
 	{
@@ -207,8 +217,7 @@ void AWebsPlayerController::ServerCompleteCapture_Implementation(ACaptureZone* C
 	}
 
 	// Obtener el componente de seda
-	UWebsSilkComponent* SilkComponent =
-		WebsCharacter->GetSilkComponent();
+	UWebsSilkComponent* SilkComponent =WebsCharacter->GetSilkComponent();
 
 	if (!SilkComponent)
 	{
@@ -216,49 +225,64 @@ void AWebsPlayerController::ServerCompleteCapture_Implementation(ACaptureZone* C
 	}
 
 	// Obtener el Data Asset asignado a la zona
-	UWebPatternDefinition* WebPattern =
-		CaptureZone->GetWebPattern();
+	UWebPatternDefinition* WebPattern =CaptureZone->GetWebPattern();
 
 	if (!WebPattern)
 	{
 		return;
 	}
 
-	// Leer el costo de seda
-	const int32 SilkCost =
-		WebPattern->PatternData.SilkCost;
+	// Validar la cantidad de puntos recibidos
+	constexpr int32 MaxDrawnPoints = 2048;
 
+	if (DrawnPoints.Num() < 2 || DrawnPoints.Num() > MaxDrawnPoints)
+	{
+		ClientCaptureResult(false, TEXT("Invalid drawing!"));
+		return;
+	}
+
+	// Validar que todos los puntos estén normalizados
+	for (const FVector2D& Point : DrawnPoints)
+	{
+		if (!FMath::IsFinite(Point.X) ||!FMath::IsFinite(Point.Y) ||Point.X < 0.0 || Point.X > 1.0 ||Point.Y < 0.0 || Point.Y > 1.0)
+		{
+			ClientCaptureResult(false,TEXT("Invalid drawing!"));
+			return;
+		}
+	}
+
+	// Calcular la precisión en el servidor
+	const float Accuracy = FWebPatternValidator::CalculateAccuracy(WebPattern->PatternData.TargetPoints,DrawnPoints);
+
+	const float RequiredAccuracy =WebPattern->PatternData.RequiredAccuracy;
+
+	if (Accuracy < RequiredAccuracy)
+	{
+		ClientCaptureResult(false, TEXT("Drawing failed!"));
+		return;
+	}
+	
+	if (CaptureZone->GetOwningPlayer() == WebsPlayerState)
+	{
+		ClientCaptureResult(false, TEXT("This zone is already yours!"));
+		return;
+	}
+	
+	// Leer el costo de seda
+	const int32 SilkCost =WebPattern->PatternData.SilkCost;
+
+	
 	// Comprobar y descontar seda en el servidor
 	if (!SilkComponent->ConsumeSilk(SilkCost))
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				5.0f,
-				FColor::Red,
-				TEXT("SERVER | Capture rejected: not enough silk")
-			);
-		}
-
+		ClientCaptureResult(false, TEXT("Not enough silk!"));
 		return;
 	}
 
 	CaptureZone->CaptureZone(WebsPlayerState);
 	
-	// Debug temporal
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			5.0f,
-			FColor::Green,
-			FString::Printf(
-				TEXT("SERVER | Capture successful! Silk remaining: %d"),
-				SilkComponent->GetCurrentSilk()
-			)
-		);
-	}
+	ClientCaptureResult(true, TEXT("Zone captured!"));
+	
 }
 
 
@@ -432,4 +456,26 @@ void AWebsPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	InitializeSilkHUD();
+}
+
+void AWebsPlayerController::ClientShowCaptureMessage_Implementation(const FString& Message, bool bSuccess)
+{
+	if (HUDWidget)
+	{
+		HUDWidget->ShowCaptureMessage(Message, bSuccess);
+	}
+}
+
+void AWebsPlayerController::ClientCaptureResult_Implementation(bool bSuccess, const FString& Message)
+{
+	if (HUDWidget)
+	{
+		HUDWidget->ShowCaptureMessage(Message, bSuccess);
+	}
+
+	if (bSuccess)
+	{
+		CloseCapturePuzzle();
+		CurrentCaptureZone = nullptr;
+	}
 }

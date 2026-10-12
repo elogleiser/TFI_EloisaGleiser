@@ -40,6 +40,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Webs|Drawing")
 	float GetRequiredAccuracy() const;
 	
+	TArray<FVector2D> GetNormalizedDrawnPoints() const;
+	
 protected:
 
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry,const FPointerEvent& InMouseEvent) override;
@@ -58,7 +60,5 @@ private:
 	
 	UPROPERTY()
 	TObjectPtr<UWebPatternDefinition> CurrentPattern;
-
-	static float DistanceToSegment(const FVector2D& Point,const FVector2D& SegmentStart,const FVector2D& SegmentEnd);
 	
 };

@@ -36,7 +36,9 @@ void UWebsCapturePuzzle::OnExitClicked()
 
 void UWebsCapturePuzzle::OnFakeCompleteClicked()
 {
-	OnPuzzleCompleted.Broadcast();
+	OnPuzzleCompleted.Broadcast(
+	   DrawingCanvas->GetNormalizedDrawnPoints()
+   );
 }
 
 void UWebsCapturePuzzle::HandleDrawingFinished(float Accuracy)
@@ -67,7 +69,7 @@ void UWebsCapturePuzzle::HandleDrawingFinished(float Accuracy)
 
 	if (bSuccess)
 	{
-		OnPuzzleCompleted.Broadcast();
+		OnPuzzleCompleted.Broadcast(DrawingCanvas->GetNormalizedDrawnPoints());
 	}
 }
 

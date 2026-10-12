@@ -37,13 +37,13 @@ public:
 	void OnCapturePuzzleExitRequested();
 	
 	UFUNCTION()
-	void OnCapturePuzzleCompleted();
+	void OnCapturePuzzleCompleted(const TArray<FVector2D>& DrawnPoints);
 	
 	UFUNCTION(Client, Reliable)
 	void ClientOpenCapturePuzzle(ACaptureZone* CaptureZone);
 	
 	UFUNCTION(Server, Reliable)
-	void ServerCompleteCapture(ACaptureZone* CaptureZone);
+	void ServerCompleteCapture(ACaptureZone* CaptureZone, const TArray<FVector2D>& DrawnPoints);
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Webs|UI")
 	TSubclassOf<UWebsHUDWidget> HUDWidgetClass;
@@ -63,6 +63,13 @@ public:
 	virtual void OnRep_Pawn() override;
 	
 	virtual void OnPossess(APawn* InPawn) override;
+	
+	UFUNCTION(Client, Reliable)
+	void ClientShowCaptureMessage(const FString& Message, bool bSuccess);
+	
+	UFUNCTION(Client, Reliable)
+	void ClientCaptureResult(bool bSuccess, const FString& Message);
+
 
 
 protected:

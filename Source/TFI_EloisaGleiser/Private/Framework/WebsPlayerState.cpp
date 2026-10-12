@@ -39,8 +39,6 @@ void AWebsPlayerState::RemoveCapturedZone()
 	
 }
 
-
-
 void AWebsPlayerState::OnRep_CapturedZones()
 {
 	UpdateLocalHUD();
@@ -48,9 +46,14 @@ void AWebsPlayerState::OnRep_CapturedZones()
 	UpdateLocalScoreboard();
 }
 
+
+
 void AWebsPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(AWebsPlayerState, CapturedZones);
+	DOREPLIFETIME(AWebsPlayerState, TotalScore);
 }
 
 void AWebsPlayerState::UpdateLocalHUD()
@@ -79,3 +82,32 @@ void AWebsPlayerState::UpdateLocalScoreboard()
 		}
 	}
 }
+
+void AWebsPlayerState::AddScore(int32 Points)
+{
+	if (!HasAuthority() || Points <= 0)
+	{
+		return;
+	}
+
+	TotalScore += Points;
+
+	UpdateLocalScoreboard();
+}
+
+void AWebsPlayerState::RemoveScore(int32 Points)
+{
+	if (!HasAuthority() || Points <= 0)
+	{
+		return;
+	}
+
+	TotalScore = FMath::Max(0, TotalScore - Points);
+
+	UpdateLocalScoreboard();
+}
+
+void AWebsPlayerState::OnRep_TotalScore()
+ {
+	UpdateLocalScoreboard();
+ }

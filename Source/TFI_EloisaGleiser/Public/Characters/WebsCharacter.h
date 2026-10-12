@@ -7,6 +7,7 @@
 #include "WebsCharacter.generated.h"
 
 class UWebsSilkComponent;
+class UWebsQuestComponent;
 
 UCLASS()
 class TFI_ELOISAGLEISER_API AWebsCharacter : public ATFI_EloisaGleiserCharacter
@@ -25,9 +26,18 @@ public:
 		return SilkComponent;
 	}
 	
+	UWebsQuestComponent* GetQuestComponent() const
+	{
+		return QuestComponent;
+	}
+
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Webs|Quests")
+	TObjectPtr<UWebsQuestComponent> QuestComponent;
 
 public:
 	// Called every frame

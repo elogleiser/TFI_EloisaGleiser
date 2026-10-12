@@ -26,6 +26,11 @@ public:
 	
 	void RemoveCapturedZone();
 	
+	int32 GetTotalScore() const { return TotalScore; }
+
+	void AddScore(int32 Points);
+	void RemoveScore(int32 Points);
+	
 
 
 
@@ -41,4 +46,10 @@ private:
 	
 	UFUNCTION()
 	void OnRep_CapturedZones();
+	
+	UPROPERTY(ReplicatedUsing = OnRep_TotalScore, VisibleAnywhere, Category = "Webs|Score")
+	int32 TotalScore = 0;
+
+	UFUNCTION()
+	void OnRep_TotalScore();
 };

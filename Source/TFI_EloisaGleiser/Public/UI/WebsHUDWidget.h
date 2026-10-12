@@ -25,6 +25,8 @@ public:
 	void UpdateScoreboard();
 	
 	void UpdateSilk(int32 CurrentSilk, int32 MaxSilk);
+	
+	void ShowCaptureMessage(const FString& Message, bool bSuccess);
 
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -47,6 +49,14 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> TXT_Silk;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> TXT_CaptureMessage;
+	
+	FTimerHandle CaptureMessageTimer;
+
+	void HideCaptureMessage();
+	
 	
 	
 };

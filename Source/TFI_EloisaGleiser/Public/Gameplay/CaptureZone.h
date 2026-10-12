@@ -31,6 +31,11 @@ public:
 	{
 		return WebPattern;
 	}
+	AWebsPlayerState* GetOwningPlayer() const
+	{
+		return OwningPlayer;
+	}
+	
 	
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -39,10 +44,10 @@ protected:
 	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
+
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Webs|Puzzle")
-	TObjectPtr<UWebPatternDefinition> WebPattern;
-	
+    	TObjectPtr<UWebPatternDefinition> WebPattern;
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Webs|Capture Zone")
 	TObjectPtr<UBoxComponent> CaptureArea;

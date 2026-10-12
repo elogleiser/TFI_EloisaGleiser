@@ -7,6 +7,9 @@
 #include "Framework/WebsPlayerState.h"
 #include "Framework/WebsPlayerController.h"
 #include "Net/UnrealNetwork.h"
+#include "Gameplay/WebPatterns/WebPatternDefinition.h"
+#include "Framework/WebsGameState.h"
+#include "Gameplay/Quests/WebsQuestTypes.h"
 
 
 // Sets default values
@@ -44,8 +47,7 @@ void ACaptureZone::Tick(float DeltaTime)
 }
 
 
-void ACaptureZone::OnCaptureAreaBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ACaptureZone::OnCaptureAreaBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	ACharacter* EnteringCharacter = Cast<ACharacter>(OtherActor);
 
@@ -140,10 +142,13 @@ void ACaptureZone::CaptureZone(AWebsPlayerState* CapturingPlayer)
 		return;
 	}
 
-	if (!CapturingPlayer)
+	if (!CapturingPlayer || !WebPattern)
 	{
 		return;
 	}
+
+	// Obtener los puntos que otorga esta zona
+	const int32 CapturePoints = WebPattern->PatternData.CapturePoints;
 
 	// La zona ya pertenece a este mismo jugador
 	if (OwningPlayer == CapturingPlayer)
@@ -151,17 +156,42 @@ void ACaptureZone::CaptureZone(AWebsPlayerState* CapturingPlayer)
 		return;
 	}
 
-	// si era de otro jugador, ese jugador pierde la zona
+	// Si era de otro jugador, pierde la zona y sus puntos
 	if (OwningPlayer)
 	{
 		OwningPlayer->RemoveCapturedZone();
+		OwningPlayer->RemoveScore(CapturePoints);
 	}
 
-	// asigna nuevo dueño
+	// Asignar nuevo dueño
 	OwningPlayer = CapturingPlayer;
 
-	// nuevo dueño suma una zona
+	// Nuevo dueño suma una zona y sus puntos
 	CapturingPlayer->AddCapturedZone();
+	CapturingPlayer->AddScore(CapturePoints);
+	
+	// Identificar la dificultad del patrón conquistado
+	FName TargetID = NAME_None;
+
+	switch (WebPattern->PatternData.Difficulty)
+	{
+	case EWebDifficulty::Easy:TargetID = FName(TEXT("Capture_Easy"));break;
+
+	case EWebDifficulty::Medium:TargetID = FName(TEXT("Capture_Medium"));break;
+
+	case EWebDifficulty::Hard:TargetID = FName(TEXT("Capture_Hard"));break;
+	}
+
+	// Reportar el evento al sistema de quests
+	if (!TargetID.IsNone())
+	{
+		AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
+
+		if (WebsGameState)
+		{
+			WebsGameState->ReportGameplayObjective(EQuestObjectiveType::Interact,TargetID,1,CapturingPlayer);
+		}
+	}
 }
 
 bool ACaptureZone::IsOccupiedBy(const AWebsPlayerState* PlayerState) const

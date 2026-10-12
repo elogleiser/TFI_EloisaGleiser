@@ -6,6 +6,8 @@
 #include "Framework/WebsGameState.h"
 #include "Framework/WebsPlayerState.h"
 #include "Components/ProgressBar.h"
+#include "TimerManager.h"
+
 
 void UWebsHUDWidget::UpdateCapturedZones(int32 NewCapturedZones)
 {
@@ -52,7 +54,7 @@ void UWebsHUDWidget::UpdateScoreboard()
 			continue;
 		}
 
-		const FString ScoreText = FString::Printf(TEXT("Player %d: %d"),i + 1,WebsPlayerState->GetCapturedZones());
+		const FString ScoreText = FString::Printf(TEXT("Player %d: %d"),i + 1,WebsPlayerState->GetTotalScore());
 
 		PlayerTexts[i]->SetText(FText::FromString(ScoreText));
 
@@ -74,4 +76,30 @@ void UWebsHUDWidget::UpdateSilk(int32 CurrentSilk, int32 MaxSilk)
 		TXT_Silk->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"),CurrentSilk,MaxSilk)));
 	}
 
+}
+
+void UWebsHUDWidget::ShowCaptureMessage(const FString& Message, bool bSuccess)
+{
+	if (!TXT_CaptureMessage)
+	{
+		return;
+	}
+
+	TXT_CaptureMessage->SetText(FText::FromString(Message));
+
+	TXT_CaptureMessage->SetColorAndOpacity(
+		FSlateColor(bSuccess ? FLinearColor::Green : FLinearColor::Red)
+	);
+
+	TXT_CaptureMessage->SetVisibility(ESlateVisibility::Visible);
+	
+	GetWorld()->GetTimerManager().SetTimer(CaptureMessageTimer,this,&UWebsHUDWidget::HideCaptureMessage,3.0f,false);
+}
+
+void UWebsHUDWidget::HideCaptureMessage()
+{
+	if (TXT_CaptureMessage)
+	{
+		TXT_CaptureMessage->SetVisibility(ESlateVisibility::Collapsed);
+	}
 }

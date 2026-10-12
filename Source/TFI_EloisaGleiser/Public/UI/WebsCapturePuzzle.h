@@ -15,7 +15,7 @@ class UWebPatternDefinition;
 class UWebsDrawingCanvas;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCapturePuzzleExitRequested);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCapturePuzzleCompleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCapturePuzzleCompleted,const TArray<FVector2D>&,DrawnPoints);
 
 UCLASS()
 class TFI_ELOISAGLEISER_API UWebsCapturePuzzle : public UUserWidget
