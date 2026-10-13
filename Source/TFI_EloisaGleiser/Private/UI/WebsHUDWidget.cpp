@@ -7,6 +7,7 @@
 #include "Framework/WebsPlayerState.h"
 #include "Components/ProgressBar.h"
 #include "TimerManager.h"
+#include "UI/WebsQuestTrackerWidget.h"
 
 
 void UWebsHUDWidget::UpdateCapturedZones(int32 NewCapturedZones)
@@ -101,5 +102,20 @@ void UWebsHUDWidget::HideCaptureMessage()
 	if (TXT_CaptureMessage)
 	{
 		TXT_CaptureMessage->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+void UWebsHUDWidget::ToggleQuestTracker()
+{
+	if (QuestTracker)
+	{
+		QuestTracker->ToggleQuestContent();
+	}
+}
+
+void UWebsHUDWidget::UpdateQuestTracker(const FWebsQuestRuntime& QuestData)
+{
+	if (QuestTracker)
+	{
+		QuestTracker->UpdateQuestDisplay(QuestData);
 	}
 }

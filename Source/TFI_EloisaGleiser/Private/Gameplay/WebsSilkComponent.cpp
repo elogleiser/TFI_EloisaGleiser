@@ -59,11 +59,7 @@ void UWebsSilkComponent::AddSilk(int32 Amount)
 		return;
 	}
 
-	CurrentSilk = FMath::Clamp(
-		CurrentSilk + Amount,
-		0,
-		MaxSilk
-	);
+	CurrentSilk = FMath::Clamp(CurrentSilk + Amount,0,MaxSilk);
 
 	OnRep_CurrentSilk();
 }

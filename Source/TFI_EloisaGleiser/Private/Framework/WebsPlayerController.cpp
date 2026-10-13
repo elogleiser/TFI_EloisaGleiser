@@ -18,6 +18,7 @@
 #include "Characters/WebsCharacter.h"
 #include "Gameplay/WebPatterns/WebPatternValidator.h"
 #include "Framework/WebsPlayerState.h"
+#include "Gameplay/Quests/WebsQuestComponent.h"
 
 
 void AWebsPlayerController::BeginPlay()
@@ -36,8 +37,8 @@ void AWebsPlayerController::BeginPlay()
 	}
 	
 	InitializeSilkHUD();
+	InitializeQuestHUD();
 }
-
 
 void AWebsPlayerController::SetupInputComponent()
 {
@@ -51,7 +52,12 @@ void AWebsPlayerController::SetupInputComponent()
 			EnhancedInput->BindAction(PauseAction,ETriggerEvent::Started,this,&AWebsPlayerController::TogglePauseMenu);
 		}
 		
+		if (EnhancedInput && IA_ToggleQuests)
+        	{
+        		EnhancedInput->BindAction(IA_ToggleQuests,ETriggerEvent::Started,this,&AWebsPlayerController::ToggleQuests);
+        	}
 	}
+	
 }
 
 void AWebsPlayerController::OpenCapturePuzzle()
@@ -407,10 +413,21 @@ void AWebsPlayerController::UpdateScoreboardHUD()
 
 void AWebsPlayerController::HandleSilkChanged(int32 CurrentSilk, int32 MaxSilk)
 {
+	/*if (!IsLocalController())
+	{
+		return;
+	}
+
+	if (HUDWidget)
+	{
+		HUDWidget->UpdateSilk(CurrentSilk, MaxSilk);
+	}*/
 	if (!IsLocalController())
 	{
 		return;
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("HUD SILK UPDATE: %d / %d"),CurrentSilk, MaxSilk);
 
 	if (HUDWidget)
 	{
@@ -478,4 +495,71 @@ void AWebsPlayerController::ClientCaptureResult_Implementation(bool bSuccess, co
 		CloseCapturePuzzle();
 		CurrentCaptureZone = nullptr;
 	}
+}
+void AWebsPlayerController::ToggleQuests()
+{
+	
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	if (HUDWidget)
+	{
+		HUDWidget->ToggleQuestTracker();
+	}
+}
+
+void AWebsPlayerController::HandleQuestStarted(FWebsQuestRuntime QuestData)
+{
+	if (IsLocalController() && HUDWidget)
+	{
+		HUDWidget->UpdateQuestTracker(QuestData);
+	}
+}
+
+void AWebsPlayerController::HandleQuestProgressChanged(FWebsQuestRuntime QuestData)
+{
+	if (IsLocalController() && HUDWidget)
+	{
+		HUDWidget->UpdateQuestTracker(QuestData);
+	}
+}
+
+void AWebsPlayerController::HandleQuestCompleted(FWebsQuestRuntime QuestData)
+{
+	if (IsLocalController() && HUDWidget)
+	{
+		HUDWidget->UpdateQuestTracker(QuestData);
+	}
+}
+
+void AWebsPlayerController::InitializeQuestHUD()
+{
+	if (!IsLocalController() || !HUDWidget)
+	{
+		return;
+	}
+
+	AWebsCharacter* WebsCharacter = Cast<AWebsCharacter>(GetPawn());
+
+	if (!WebsCharacter)
+	{
+		return;
+	}
+
+	UWebsQuestComponent* QuestComponent =WebsCharacter->GetQuestComponent();
+
+	if (!QuestComponent)
+	{
+		return;
+	}
+
+	QuestComponent->OnQuestStarted.AddUniqueDynamic(this, &AWebsPlayerController::HandleQuestStarted);
+
+	QuestComponent->OnQuestProgressChanged.AddUniqueDynamic(this, &AWebsPlayerController::HandleQuestProgressChanged);
+
+	QuestComponent->OnQuestCompleted.AddUniqueDynamic(this, &AWebsPlayerController::HandleQuestCompleted);
+
+	UE_LOG(LogTemp, Warning, TEXT("QUEST HUD: Delegates connected"));
 }

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "TFI_EloisaGleiserPlayerController.h"
+#include "Gameplay/Quests/WebsQuestTypes.h"
 #include "WebsPlayerController.generated.h"
 
 /**
@@ -81,6 +82,23 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UWebsCapturePuzzle> CapturePuzzle;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Quests")
+	TObjectPtr<UInputAction> IA_ToggleQuests;
+
+	UFUNCTION()
+	void ToggleQuests();
+	
+	UFUNCTION()
+	void HandleQuestStarted(FWebsQuestRuntime QuestData);
+
+	UFUNCTION()
+	void HandleQuestProgressChanged(FWebsQuestRuntime QuestData);
+
+	UFUNCTION()
+	void HandleQuestCompleted(FWebsQuestRuntime QuestData);
+
+	void InitializeQuestHUD();
 
 	
 private:

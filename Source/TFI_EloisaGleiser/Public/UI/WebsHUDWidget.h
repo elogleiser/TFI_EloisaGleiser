@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Gameplay/Quests/WebsQuestTypes.h"
 #include "WebsHUDWidget.generated.h"
 
 /**
@@ -13,6 +14,8 @@
 class UTextBlock;
 class AWebsPlayerState;
 class UProgressBar;
+class UWebsQuestTrackerWidget;
+struct FWebsQuestRuntime;
 
 UCLASS()
 class TFI_ELOISAGLEISER_API UWebsHUDWidget : public UUserWidget
@@ -27,6 +30,13 @@ public:
 	void UpdateSilk(int32 CurrentSilk, int32 MaxSilk);
 	
 	void ShowCaptureMessage(const FString& Message, bool bSuccess);
+	
+	UFUNCTION(BlueprintCallable, Category = "Quests")
+	void ToggleQuestTracker();
+	
+	UFUNCTION(BlueprintCallable, Category = "Quests")
+	void UpdateQuestTracker(const FWebsQuestRuntime& QuestData);
+
 
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -56,6 +66,9 @@ private:
 	FTimerHandle CaptureMessageTimer;
 
 	void HideCaptureMessage();
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UWebsQuestTrackerWidget> QuestTracker;
 	
 	
 	
