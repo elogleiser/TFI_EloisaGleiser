@@ -70,8 +70,16 @@ public:
 	
 	UFUNCTION(Client, Reliable)
 	void ClientCaptureResult(bool bSuccess, const FString& Message);
+	
+	void Shoot();
 
-
+	void Interact();
+	
+	UFUNCTION(Server, Reliable)
+	void ServerInteract();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Webs|Interaction")
+	void ExecuteInteraction(AActor* InteractableActor);
 
 protected:
 	
@@ -86,6 +94,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Quests")
 	TObjectPtr<UInputAction> IA_ToggleQuests;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input|Shooting")
+	TObjectPtr<UInputAction> IA_Shoot;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input|Interaction")
+	TObjectPtr<UInputAction> IA_Interact;
+	
 	UFUNCTION()
 	void ToggleQuests();
 	
@@ -99,6 +113,8 @@ protected:
 	void HandleQuestCompleted(FWebsQuestRuntime QuestData);
 
 	void InitializeQuestHUD();
+	
+	
 
 	
 private:

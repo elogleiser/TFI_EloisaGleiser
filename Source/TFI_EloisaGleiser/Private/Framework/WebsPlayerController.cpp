@@ -19,6 +19,9 @@
 #include "Gameplay/WebPatterns/WebPatternValidator.h"
 #include "Framework/WebsPlayerState.h"
 #include "Gameplay/Quests/WebsQuestComponent.h"
+#include "Gameplay/WebsShootingComponent.h"
+#include "EngineUtils.h"
+#include "Components/SphereComponent.h"
 
 
 void AWebsPlayerController::BeginPlay()
@@ -53,9 +56,19 @@ void AWebsPlayerController::SetupInputComponent()
 		}
 		
 		if (EnhancedInput && IA_ToggleQuests)
-        	{
+		{
         		EnhancedInput->BindAction(IA_ToggleQuests,ETriggerEvent::Started,this,&AWebsPlayerController::ToggleQuests);
-        	}
+		}
+		
+		if (IA_Shoot)
+		{
+			EnhancedInput->BindAction(IA_Shoot,ETriggerEvent::Started,this,&AWebsPlayerController::Shoot);
+		}
+		
+		if (IA_Interact)
+		{
+			EnhancedInput->BindAction(IA_Interact,ETriggerEvent::Started,this,&AWebsPlayerController::Interact);
+		}
 	}
 	
 }
@@ -426,8 +439,7 @@ void AWebsPlayerController::HandleSilkChanged(int32 CurrentSilk, int32 MaxSilk)
 	{
 		return;
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("HUD SILK UPDATE: %d / %d"),CurrentSilk, MaxSilk);
+	
 
 	if (HUDWidget)
 	{
@@ -560,6 +572,80 @@ void AWebsPlayerController::InitializeQuestHUD()
 	QuestComponent->OnQuestProgressChanged.AddUniqueDynamic(this, &AWebsPlayerController::HandleQuestProgressChanged);
 
 	QuestComponent->OnQuestCompleted.AddUniqueDynamic(this, &AWebsPlayerController::HandleQuestCompleted);
+	
+}
 
-	UE_LOG(LogTemp, Warning, TEXT("QUEST HUD: Delegates connected"));
+
+void AWebsPlayerController::Shoot()
+{
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	AWebsCharacter* WebsCharacter = GetPawn<AWebsCharacter>();
+
+	if (!WebsCharacter)
+	{
+		return;
+	}
+
+	// No permitir disparar mientras está aturdido
+	if (WebsCharacter->IsStunned())
+	{
+		UE_LOG(LogTemp, Warning,TEXT("WEB SHOT BLOCKED: Player is stunned"));
+		return;
+	}
+
+	UWebsShootingComponent* ShootingComponent =WebsCharacter->GetShootingComponent();
+
+	if (ShootingComponent)
+	{
+		ShootingComponent->TryShoot();
+	}
+}
+
+void AWebsPlayerController::Interact()
+{
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	ServerInteract();
+}
+
+void AWebsPlayerController::ServerInteract_Implementation()
+{
+	APawn* PlayerPawn = GetPawn();
+
+	if (!IsValid(PlayerPawn))
+	{
+		return;
+	}
+
+	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	{
+		AActor* Actor = *It;
+
+		if (!IsValid(Actor) || Actor == PlayerPawn)
+		{
+			continue;
+		}
+
+		USphereComponent* Sphere =Actor->FindComponentByClass<USphereComponent>();
+
+		if (!IsValid(Sphere))
+		{
+			continue;
+		}
+
+		if (Sphere->IsOverlappingActor(PlayerPawn))
+		{
+			UE_LOG(LogTemp, Warning,TEXT("INTERACTABLE FOUND: %s"),*GetNameSafe(Actor));
+
+			ExecuteInteraction(Actor);
+			return;
+		}
+	}
 }
