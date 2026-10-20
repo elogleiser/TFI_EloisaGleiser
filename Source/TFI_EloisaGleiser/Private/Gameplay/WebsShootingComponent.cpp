@@ -63,8 +63,7 @@ void UWebsShootingComponent::TryShoot()
 	ProcessShot(Start, Direction);
 }
 
-void UWebsShootingComponent::ServerTryShoot_Implementation(FVector_NetQuantize Start,
-	FVector_NetQuantizeNormal Direction)
+void UWebsShootingComponent::ServerTryShoot_Implementation(FVector_NetQuantize Start,FVector_NetQuantizeNormal Direction)
 {
 	ProcessShot(Start, Direction);
 }
@@ -87,8 +86,7 @@ void UWebsShootingComponent::ProcessShot(const FVector& Start,const FVector& Dir
 	{
 		if (WebsCharacter->IsStunned())
 		{
-			UE_LOG(LogTemp, Warning,
-				TEXT("SERVER: Shot rejected - player is stunned"));
+			UE_LOG(LogTemp, Warning,TEXT("SERVER: Shot rejected - player is stunned"));
 			return;
 		}
 	}
@@ -122,57 +120,33 @@ void UWebsShootingComponent::ProcessShot(const FVector& Start,const FVector& Dir
 
 	const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit,Start,End,ECC_Visibility,Params);
 //
-	DrawDebugLine(
-	GetWorld(),
-	Start,
-	bHit ? Hit.ImpactPoint : End,
-	FColor::Red,
-	false,
-	5.f,
-	0,
-	3.f
-);
+	DrawDebugLine(GetWorld(),Start,bHit ? Hit.ImpactPoint : End,FColor::Red,false,5.f,0,3.f);
 
-	DrawDebugSphere(
-		GetWorld(),
-		Start,
-		15.f,
-		12,
-		FColor::Yellow,
-		false,
-		5.f
-	);
+	DrawDebugSphere(GetWorld(),Start,15.f,12,FColor::Yellow,false,5.f);
 
-	UE_LOG(LogTemp, Warning,
-		TEXT("SHOT DEBUG | Start: %s | Direction: %s | End: %s"),
-		*Start.ToString(),
-		*Direction.ToString(),
-		*End.ToString());
+	UE_LOG(LogTemp, Warning,TEXT("SHOT DEBUG | Start: %s | Direction: %s | End: %s"),*Start.ToString(),*Direction.ToString(),*End.ToString());
 	
 	//
 
 	if (bHit)
 	{
-		UE_LOG(LogTemp, Warning,
-			TEXT("SERVER WEB SHOT HIT: %s"),
-			*GetNameSafe(Hit.GetActor()));
+		UE_LOG(LogTemp, Warning, TEXT("SERVER WEB SHOT HIT: %s"),*GetNameSafe(Hit.GetActor()));
 
-		AWebsCharacter* TargetCharacter =
-			Cast<AWebsCharacter>(Hit.GetActor());
+		AWebsCharacter* TargetCharacter = Cast<AWebsCharacter>(Hit.GetActor());
 
-		if (TargetCharacter)
+		if (TargetCharacter && TargetCharacter != WebsCharacter)
 		{
 			TargetCharacter->ApplyStun(2.f);
 
-			UE_LOG(LogTemp, Warning,
-				TEXT("WEB STUN APPLIED TO: %s"),
-				*GetNameSafe(TargetCharacter));
+			// Avisar que este jugador aturdió a otro.
+			WebsCharacter->OnSuccessfulStun(TargetCharacter);
+
+			UE_LOG(LogTemp, Warning, TEXT("WEB STUN APPLIED TO: %s"),*GetNameSafe(TargetCharacter));
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning,
-			TEXT("SERVER WEB SHOT MISSED"));
+		UE_LOG(LogTemp, Warning, TEXT("SERVER WEB SHOT MISSED"));
 	}
 }
 

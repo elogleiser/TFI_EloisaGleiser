@@ -49,6 +49,11 @@ public:
 	bool IsStunned() const { return bIsStunned; }
 	
 	virtual bool IsMoveInputIgnored() const override;
+	
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Webs|Quests")
+	void OnSuccessfulStun(AActor* StunnedActor);
+
 
 	
 protected:
