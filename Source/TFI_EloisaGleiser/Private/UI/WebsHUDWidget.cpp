@@ -8,6 +8,7 @@
 #include "Components/ProgressBar.h"
 #include "TimerManager.h"
 #include "UI/WebsQuestTrackerWidget.h"
+#include "Components/VerticalBox.h"
 
 
 void UWebsHUDWidget::UpdateCapturedZones(int32 NewCapturedZones)
@@ -106,16 +107,49 @@ void UWebsHUDWidget::HideCaptureMessage()
 }
 void UWebsHUDWidget::ToggleQuestTracker()
 {
-	if (QuestTracker)
+	for (const auto& QuestPair : QuestWidgets)
 	{
-		QuestTracker->ToggleQuestContent();
+		UWebsQuestTrackerWidget* QuestWidget = QuestPair.Value.Get();
+
+		if (IsValid(QuestWidget))
+		{
+			QuestWidget->ToggleQuestContent();
+		}
 	}
 }
 
 void UWebsHUDWidget::UpdateQuestTracker(const FWebsQuestRuntime& QuestData)
 {
-	if (QuestTracker)
+	if (!VB_QuestList || !QuestTrackerWidgetClass || !QuestData.QuestDefinition)
 	{
-		QuestTracker->UpdateQuestDisplay(QuestData);
+		return;
 	}
+
+	const FName QuestID = QuestData.QuestID;
+
+	// Buscar si ya existe un widget para esta misión.
+	UWebsQuestTrackerWidget* QuestWidget = nullptr;
+
+	if (TObjectPtr<UWebsQuestTrackerWidget>* FoundWidget = QuestWidgets.Find(QuestID))
+	{
+		QuestWidget = FoundWidget->Get();
+	}
+
+	// Si todavía no existe, crear uno nuevo.
+	if (!IsValid(QuestWidget))
+	{
+		QuestWidget = CreateWidget<UWebsQuestTrackerWidget>(GetOwningPlayer(),QuestTrackerWidgetClass);
+
+		if (!QuestWidget)
+		{
+			return;
+		}
+
+		VB_QuestList->AddChildToVerticalBox(QuestWidget);
+
+		QuestWidgets.Add(QuestID, QuestWidget);
+	}
+
+	// Actualizar únicamente la misión correspondiente.
+	QuestWidget->UpdateQuestDisplay(QuestData);
 }
