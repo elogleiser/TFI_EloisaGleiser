@@ -29,6 +29,7 @@ public:
 	// Solo el servidor puede consumir seda.
 	bool ConsumeSilk(int32 Amount);
 
+	UFUNCTION(BlueprintCallable, Category="Webs|Silk")
 	void AddSilk(int32 Amount);
 	
 	UPROPERTY(BlueprintAssignable, Category="Webs|Silk")
