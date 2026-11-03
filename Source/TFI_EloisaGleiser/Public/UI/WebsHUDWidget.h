@@ -37,6 +37,13 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Quests")
 	void UpdateQuestTracker(const FWebsQuestRuntime& QuestData);
+	
+	UFUNCTION(BlueprintCallable, Category = "Webs|Match")
+	void UpdateMatchHUD();
+	
+protected:
+	virtual void NativeTick(const FGeometry& MyGeometry,float InDeltaTime) override;
+		
 
 
 private:
@@ -63,6 +70,12 @@ private:
 	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> TXT_CaptureMessage;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> Text_Countdown;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> Text_MatchTimer;
 	
 	FTimerHandle CaptureMessageTimer;
 

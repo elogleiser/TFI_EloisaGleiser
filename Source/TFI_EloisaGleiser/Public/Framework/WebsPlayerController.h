@@ -46,6 +46,9 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerCompleteCapture(ACaptureZone* CaptureZone, const TArray<FVector2D>& DrawnPoints);
 	
+	UFUNCTION(Server, Reliable)
+	void ServerSetPlayerReady();
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Webs|UI")
 	TSubclassOf<UWebsHUDWidget> HUDWidgetClass;
 
@@ -114,7 +117,11 @@ protected:
 
 	void InitializeQuestHUD();
 	
-	
+	// Intenta avisar al servidor cuando el jugador ya tiene su Pawn
+	void TrySetPlayerReady();
+
+	// Evita enviar el aviso varias veces desde el mismo client
+	bool bReadySent = false;
 
 	
 private:

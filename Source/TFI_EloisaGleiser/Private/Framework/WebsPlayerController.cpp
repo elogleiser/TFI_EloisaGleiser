@@ -22,6 +22,7 @@
 #include "Gameplay/WebsShootingComponent.h"
 #include "EngineUtils.h"
 #include "Components/SphereComponent.h"
+#include "Framework/WebsGameMode.h"
 
 
 void AWebsPlayerController::BeginPlay()
@@ -41,6 +42,7 @@ void AWebsPlayerController::BeginPlay()
 	
 	InitializeSilkHUD();
 	InitializeQuestHUD();
+	TrySetPlayerReady();
 }
 
 void AWebsPlayerController::SetupInputComponent()
@@ -479,12 +481,14 @@ void AWebsPlayerController::OnRep_Pawn()
 {
 	Super::OnRep_Pawn();
 	InitializeSilkHUD();
+	TrySetPlayerReady();
 }
 
 void AWebsPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	InitializeSilkHUD();
+	TrySetPlayerReady();
 }
 
 void AWebsPlayerController::ClientShowCaptureMessage_Implementation(const FString& Message, bool bSuccess)
@@ -647,5 +651,30 @@ void AWebsPlayerController::ServerInteract_Implementation()
 			ExecuteInteraction(Actor);
 			return;
 		}
+	}
+}
+
+void AWebsPlayerController::TrySetPlayerReady()
+{
+	if (!IsLocalController() || bReadySent || !IsValid(GetPawn()))
+	{
+		return;
+	}
+
+	bReadySent = true;
+
+	ServerSetPlayerReady();
+}
+
+void AWebsPlayerController::ServerSetPlayerReady_Implementation()
+{
+	UE_LOG(LogTemp,Warning,TEXT("WEBS: Player READY on server: %s"),*GetNameSafe(PlayerState));
+
+	AWebsGameMode* WebsGameMode =
+		GetWorld()->GetAuthGameMode<AWebsGameMode>();
+
+	if (WebsGameMode)
+	{
+		WebsGameMode->RegisterPlayerReady(this);
 	}
 }

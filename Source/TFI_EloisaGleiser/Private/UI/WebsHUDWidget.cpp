@@ -153,3 +153,56 @@ void UWebsHUDWidget::UpdateQuestTracker(const FWebsQuestRuntime& QuestData)
 	// Actualizar únicamente la misión correspondiente.
 	QuestWidget->UpdateQuestDisplay(QuestData);
 }
+
+
+void UWebsHUDWidget::UpdateMatchHUD()
+{
+	UWorld* World = GetWorld();
+
+	if (!World)
+	{
+		return;
+	}
+
+	const AWebsGameState* WebsGameState =World->GetGameState<AWebsGameState>();
+
+	if (!WebsGameState)
+	{
+		return;
+	}
+
+	// Mostrar la cuenta regresiva antes de comenzar.
+	if (Text_Countdown)
+	{
+		if (WebsGameState->MatchPhase == EWebsMatchPhase::Countdown)
+		{
+			Text_Countdown->SetVisibility(ESlateVisibility::Visible);
+
+			Text_Countdown->SetText(FText::AsNumber(WebsGameState->CountdownRemaining));
+		}
+		else
+		{
+			Text_Countdown->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
+
+	// Mostrar el cronómetro de la partida.
+	if (Text_MatchTimer)
+	{
+		const int32 TotalSeconds =FMath::Max(0, WebsGameState->RemainingTime);
+
+		const int32 Minutes = TotalSeconds / 60;
+		const int32 Seconds = TotalSeconds % 60;
+
+		const FString TimeString = FString::Printf(TEXT("%02d:%02d"),Minutes,Seconds);
+
+		Text_MatchTimer->SetText(FText::FromString(TimeString));
+	}
+}
+
+void UWebsHUDWidget::NativeTick(const FGeometry& MyGeometry,float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	UpdateMatchHUD();
+}
