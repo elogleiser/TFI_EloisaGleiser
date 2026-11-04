@@ -23,7 +23,7 @@
 #include "EngineUtils.h"
 #include "Components/SphereComponent.h"
 #include "Framework/WebsGameMode.h"
-
+#include "Framework/WebsGameState.h"
 
 void AWebsPlayerController::BeginPlay()
 {
@@ -207,6 +207,18 @@ void AWebsPlayerController::ClientOpenCapturePuzzle_Implementation(ACaptureZone*
 
 void AWebsPlayerController::ServerCompleteCapture_Implementation(ACaptureZone* CaptureZone, const TArray<FVector2D>& DrawnPoints)
 {
+	AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
+
+	if (!WebsGameState ||
+		WebsGameState->MatchPhase != EWebsMatchPhase::Playing)
+	{
+		ClientCaptureResult(false,TEXT("Wait for the match to start!"));
+
+		return;
+	}
+	
+	
+	
 	if (!CaptureZone)
 	{
 		return;
@@ -584,6 +596,15 @@ void AWebsPlayerController::Shoot()
 {
 	if (!IsLocalController())
 	{
+		return;
+	}
+	
+	AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
+
+	if (!WebsGameState ||WebsGameState->MatchPhase != EWebsMatchPhase::Playing)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("WEBS: Shooting blocked - match not playing"));
+
 		return;
 	}
 

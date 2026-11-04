@@ -17,6 +17,7 @@ class UProgressBar;
 class UWebsQuestTrackerWidget;
 struct FWebsQuestRuntime;
 class UVerticalBox;
+class UBorder;
 
 UCLASS()
 class TFI_ELOISAGLEISER_API UWebsHUDWidget : public UUserWidget
@@ -41,9 +42,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Webs|Match")
 	void UpdateMatchHUD();
 	
+	void UpdateMatchResult();
+	
 protected:
-	virtual void NativeTick(const FGeometry& MyGeometry,float InDeltaTime) override;
-		
+	
+	virtual void NativeConstruct() override;
+	
+	virtual void NativeDestruct() override;
+
+	void HandleMatchDataChanged();
+	
+	UPROPERTY()
+	TObjectPtr<class AWebsGameState> CachedWebsGameState = nullptr;
 
 
 private:
@@ -93,6 +103,16 @@ private:
 	UPROPERTY(Transient)
 	TMap<FName, TObjectPtr<UWebsQuestTrackerWidget>> QuestWidgets;
 	
-	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UBorder> Border_MatchResult;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> Text_ResultTitle;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> Text_ResultDescription;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> Text_FinalScore;
 	
 };

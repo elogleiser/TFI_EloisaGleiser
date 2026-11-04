@@ -9,6 +9,8 @@
 #include "TimerManager.h"
 #include "UI/WebsQuestTrackerWidget.h"
 #include "Components/VerticalBox.h"
+#include "Components/Border.h"
+#include "GameFramework/PlayerController.h"
 
 
 void UWebsHUDWidget::UpdateCapturedZones(int32 NewCapturedZones)
@@ -200,9 +202,111 @@ void UWebsHUDWidget::UpdateMatchHUD()
 	}
 }
 
-void UWebsHUDWidget::NativeTick(const FGeometry& MyGeometry,float InDeltaTime)
-{
-	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	UpdateMatchHUD();
+void UWebsHUDWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	
+	AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
+
+	if (WebsGameState)
+	{
+		CachedWebsGameState = WebsGameState;
+
+		WebsGameState->OnMatchDataChanged.AddUObject(this,&UWebsHUDWidget::HandleMatchDataChanged);
+	}
+
+	// Actualizar los textos con el estado actual.
+	HandleMatchDataChanged();
 }
+
+void UWebsHUDWidget::HandleMatchDataChanged()
+{
+	UpdateMatchHUD();
+	UpdateMatchResult();
+}
+
+void UWebsHUDWidget::NativeDestruct()
+{
+	if (IsValid(CachedWebsGameState))
+	{
+		CachedWebsGameState->OnMatchDataChanged.RemoveAll(this);
+	}
+
+	CachedWebsGameState = nullptr;
+
+	Super::NativeDestruct();
+}
+
+void UWebsHUDWidget::UpdateMatchResult()
+{
+    if (!Border_MatchResult)
+    {
+        return;
+    }
+
+    const AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
+
+    if (!WebsGameState)
+    {
+        return;
+    }
+
+    // Ocultar el panel mientras la partida no haya terminado.
+    if (WebsGameState->MatchPhase != EWebsMatchPhase::Finished)
+    {
+        Border_MatchResult->SetVisibility(ESlateVisibility::Collapsed);
+        return;
+    }
+
+    // Obtener el jugador local.
+    APlayerController* LocalController = GetOwningPlayer();
+
+    if (!LocalController)
+    {
+        return;
+    }
+
+    AWebsPlayerState* LocalPlayerState =LocalController->GetPlayerState<AWebsPlayerState>();
+
+    if (!LocalPlayerState)
+    {
+        return;
+    }
+	//
+
+	const bool bIsDraw = WebsGameState->bMatchIsDraw;
+
+	if (!bIsDraw && !WebsGameState->WinnerPlayerState)
+	{
+		return;
+	}
+
+    // Comparar el ganador con el jugador local.
+    const bool bIsWinner =
+        WebsGameState->WinnerPlayerState == LocalPlayerState;
+
+	if (Text_ResultTitle)
+	{
+		const FString ResultTitle = bIsDraw? TEXT("DRAW!"): (bIsWinner ? TEXT("VICTORY!") : TEXT("DEFEAT!"));
+
+		Text_ResultTitle->SetText(FText::FromString(ResultTitle));
+	}
+
+	if (Text_ResultDescription)
+	{
+		const FString ResultDescription = bIsDraw? TEXT("The match ended in a tie!"): (bIsWinner? TEXT("You won the match!"): TEXT("Another player won the match!"));
+
+		Text_ResultDescription->SetText(FText::FromString(ResultDescription));
+	}
+	
+	if (Text_FinalScore)
+	{
+		const int32 FinalScore = LocalPlayerState->GetTotalScore();
+
+		Text_FinalScore->SetText(FText::FromString(FString::Printf(TEXT("FINAL SCORE: %d"),FinalScore)));
+	}
+
+    Border_MatchResult->SetVisibility(ESlateVisibility::Visible);
+}
+

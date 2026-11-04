@@ -30,6 +30,8 @@ public:
 	int32 RequiredPlayers = 2;
 	
 	void RegisterPlayerReady(APlayerController* PlayerController);
+	
+	void CheckWinCondition();
 
 protected:
 
@@ -42,8 +44,6 @@ private:
 	void StartWebsMatch();
 
 	void UpdateMatchTimer();
-	
-	void CheckWinCondition();
 	
 	void FinishWebsMatch(AWebsPlayerState* Winner);
 	

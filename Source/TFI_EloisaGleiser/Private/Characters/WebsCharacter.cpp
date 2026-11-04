@@ -8,7 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
-
+#include "Framework/WebsGameState.h"
 
 
 // Sets default values
@@ -28,7 +28,7 @@ AWebsCharacter::AWebsCharacter()
 void AWebsCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	UpdateMovementForMatchPhase();
 }
 
 
@@ -76,6 +76,7 @@ void AWebsCharacter::OnRep_IsStunned()
 	UpdateStunMovement();
 }
 
+
 void AWebsCharacter::UpdateStunMovement()
 {
 	UCharacterMovementComponent* Movement = GetCharacterMovement();
@@ -87,7 +88,7 @@ void AWebsCharacter::UpdateStunMovement()
 
 	if (bIsStunned)
 	{
-		// Guardar el modo anterior solo si todavía no está deshabilitado
+		// Guardar el modo anterior solo si estaba habilitado.
 		if (Movement->MovementMode != MOVE_None)
 		{
 			MovementModeBeforeStun = Movement->MovementMode;
@@ -100,7 +101,14 @@ void AWebsCharacter::UpdateStunMovement()
 	}
 	else
 	{
-		// Si estaba cayendo, dejar que Unreal resuelva el aterrizaje
+		const AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
+
+		// Solo restaurar movimiento durante Playing.
+		if (!WebsGameState ||WebsGameState->MatchPhase != EWebsMatchPhase::Playing)
+		{
+			return;
+		}
+
 		if (MovementModeBeforeStun == MOVE_Falling)
 		{
 			Movement->SetMovementMode(MOVE_Falling);
@@ -114,6 +122,7 @@ void AWebsCharacter::UpdateStunMovement()
 	}
 }
 
+
 void AWebsCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -121,8 +130,52 @@ void AWebsCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(AWebsCharacter, bIsStunned);
 }
 
+
 bool AWebsCharacter::IsMoveInputIgnored() const
 {
-	return bIsStunned || Super::IsMoveInputIgnored();
+	const AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
+
+	const bool bMatchNotPlaying =!WebsGameState ||WebsGameState->MatchPhase != EWebsMatchPhase::Playing;
+
+	return bIsStunned ||bMatchNotPlaying ||Super::IsMoveInputIgnored();
 }
+
+
+void AWebsCharacter::UpdateMovementForMatchPhase()
+{
+	const AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
+
+	if (!WebsGameState)
+	{
+		return;
+	}
+
+	UCharacterMovementComponent* Movement =GetCharacterMovement();
+
+	if (!Movement)
+	{
+		return;
+	}
+
+	const bool bShouldLockMovement =WebsGameState->MatchPhase != EWebsMatchPhase::Playing;
+
+	if (bMovementStateInitialized &&bShouldLockMovement == bMovementLockedByMatch)
+	{
+		return;
+	}
+
+	bMovementStateInitialized = true;
+	bMovementLockedByMatch = bShouldLockMovement;
+
+	if (bShouldLockMovement)
+	{
+		Movement->StopMovementImmediately();
+		Movement->DisableMovement();
+	}
+	else if (!bIsStunned)
+	{
+		Movement->SetMovementMode(MOVE_Walking);
+	}
+}
+
 

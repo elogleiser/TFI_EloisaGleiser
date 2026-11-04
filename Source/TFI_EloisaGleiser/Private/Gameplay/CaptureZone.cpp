@@ -10,6 +10,7 @@
 #include "Gameplay/WebPatterns/WebPatternDefinition.h"
 #include "Framework/WebsGameState.h"
 #include "Gameplay/Quests/WebsQuestTypes.h"
+#include "Framework/WebsGameMode.h"
 
 
 // Sets default values
@@ -141,7 +142,15 @@ void ACaptureZone::CaptureZone(AWebsPlayerState* CapturingPlayer)
 	{
 		return;
 	}
+	
+	AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
 
+	if (!WebsGameState ||
+		WebsGameState->MatchPhase != EWebsMatchPhase::Playing)
+	{
+		return;
+	}
+	
 	if (!CapturingPlayer || !WebPattern)
 	{
 		return;
@@ -170,6 +179,10 @@ void ACaptureZone::CaptureZone(AWebsPlayerState* CapturingPlayer)
 	CapturingPlayer->AddCapturedZone();
 	CapturingPlayer->AddScore(CapturePoints);
 	
+	AWebsGameMode* WebsGameMode =GetWorld()->GetAuthGameMode<AWebsGameMode>();
+
+	//
+	
 	// Identificar la dificultad del patrón conquistado
 	FName TargetID = NAME_None;
 
@@ -185,13 +198,13 @@ void ACaptureZone::CaptureZone(AWebsPlayerState* CapturingPlayer)
 	// Reportar el evento al sistema de quests
 	if (!TargetID.IsNone())
 	{
-		AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
-
-		if (WebsGameState)
-		{
-			WebsGameState->ReportGameplayObjective(EQuestObjectiveType::Interact,TargetID,1,CapturingPlayer);
-		}
+		WebsGameState->ReportGameplayObjective(EQuestObjectiveType::Interact,TargetID,1,CapturingPlayer);
 	}
+	
+	if (WebsGameMode)
+    	{
+    		WebsGameMode->CheckWinCondition();
+    	}
 }
 
 bool ACaptureZone::IsOccupiedBy(const AWebsPlayerState* PlayerState) const

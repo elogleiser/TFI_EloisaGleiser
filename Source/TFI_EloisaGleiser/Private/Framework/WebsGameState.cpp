@@ -4,6 +4,8 @@
 #include "Public/Framework/WebsGameState.h"
 #include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
+#include "Characters/WebsCharacter.h"
+#include "EngineUtils.h"
 
 void AWebsGameState::ReportGameplayObjective(EQuestObjectiveType ObjectiveType, FName TargetID, int32 Amount,
 	APlayerState* InstigatorPlayer)
@@ -34,11 +36,14 @@ void AWebsGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(AWebsGameState, RemainingTime);
 	DOREPLIFETIME(AWebsGameState, WinnerPlayerState);
 	DOREPLIFETIME(AWebsGameState, CountdownRemaining);
+	DOREPLIFETIME(AWebsGameState, bMatchIsDraw);
 }
 
 void AWebsGameState::OnRep_MatchPhase()
 {
 	UE_LOG(LogTemp,Warning,TEXT("Match Phase changed: %d"),static_cast<int32>(MatchPhase));
+	RefreshCharactersMovement();
+	NotifyMatchDataChanged();
 }
 
 void AWebsGameState::OnRep_WinnerPlayerState()
@@ -47,4 +52,33 @@ void AWebsGameState::OnRep_WinnerPlayerState()
 	{
 		UE_LOG(LogTemp,Warning,TEXT("WEBS: Winner replicated: %s"),*WinnerPlayerState->GetPlayerName());
 	}
+	
+	NotifyMatchDataChanged();
+}
+
+
+void AWebsGameState::RefreshCharactersMovement()
+{
+	for (TActorIterator<AWebsCharacter> It(GetWorld()); It; ++It)
+	{
+		It->UpdateMovementForMatchPhase();
+	}
+}
+void AWebsGameState::NotifyMatchDataChanged()
+{
+	OnMatchDataChanged.Broadcast();
+}
+void AWebsGameState::OnRep_RemainingTime()
+{
+	NotifyMatchDataChanged();
+}
+
+void AWebsGameState::OnRep_CountdownRemaining()
+{
+	NotifyMatchDataChanged();
+}
+
+void AWebsGameState::OnRep_MatchIsDraw()
+{
+	NotifyMatchDataChanged();
 }

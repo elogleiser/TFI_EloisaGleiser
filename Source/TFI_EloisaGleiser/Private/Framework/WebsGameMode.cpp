@@ -19,8 +19,10 @@ void AWebsGameMode::BeginPlay()
 	if (WebsGameState)
 	{
 		WebsGameState->MatchPhase = EWebsMatchPhase::Waiting;
+		WebsGameState->RefreshCharactersMovement();
 		WebsGameState->RemainingTime = MatchDuration;
 		WebsGameState->CountdownRemaining = 5;
+		WebsGameState->NotifyMatchDataChanged();
 	}
 
 	UE_LOG(LogTemp,Warning,TEXT("WEBS: Waiting for players..."));
@@ -38,7 +40,9 @@ void AWebsGameMode::StartWebsMatch()
 
 	// Inicializar el estado de la partida.
 	WebsGameState->MatchPhase = EWebsMatchPhase::Playing;
+	WebsGameState->RefreshCharactersMovement();
 	WebsGameState->RemainingTime = MatchDuration;
+	WebsGameState->NotifyMatchDataChanged();
 
 	// Actualizar el tiempo una vez por segundo.
 	GetWorldTimerManager().SetTimer(MatchTimerHandle,this,&AWebsGameMode::UpdateMatchTimer,1.0f,true);
@@ -56,7 +60,11 @@ void AWebsGameMode::UpdateMatchTimer()
 	}
 
 	WebsGameState->RemainingTime = FMath::Max(0,WebsGameState->RemainingTime - 1);
+	
+	WebsGameState->NotifyMatchDataChanged();
+	
 	CheckWinCondition();
+	
 	if (WebsGameState->MatchPhase == EWebsMatchPhase::Finished)
 	{
 		return;
@@ -68,6 +76,7 @@ void AWebsGameMode::UpdateMatchTimer()
 	{
 		FinishMatchByTime();
 	}
+	
 }
 
 
@@ -110,15 +119,15 @@ void AWebsGameMode::FinishWebsMatch(AWebsPlayerState* Winner)
 	{
 		return;
 	}
-
-	// Detener el cronómetro.
+	
 	GetWorldTimerManager().ClearTimer(MatchTimerHandle);
 
-	// Guardar el ganador (nullptr si hubo empate).
 	WebsGameState->WinnerPlayerState = Winner;
+	WebsGameState->bMatchIsDraw = (Winner == nullptr);
 
-	// Cambiar el estado de la partida.
 	WebsGameState->MatchPhase = EWebsMatchPhase::Finished;
+	WebsGameState->RefreshCharactersMovement();
+	WebsGameState->NotifyMatchDataChanged();
 
 	if (Winner)
 	{
@@ -190,8 +199,7 @@ void AWebsGameMode::CheckAllPlayersReady()
 {
 	AWebsGameState* WebsGameState = GetGameState<AWebsGameState>();
 
-	if (!WebsGameState ||
-		WebsGameState->MatchPhase != EWebsMatchPhase::Waiting)
+	if (!WebsGameState ||WebsGameState->MatchPhase != EWebsMatchPhase::Waiting)
 	{
 		return;
 	}
@@ -219,7 +227,9 @@ void AWebsGameMode::StartCountdown()
 	}
 
 	WebsGameState->MatchPhase = EWebsMatchPhase::Countdown;
+	WebsGameState->RefreshCharactersMovement();
 	WebsGameState->CountdownRemaining = 5;
+	WebsGameState->NotifyMatchDataChanged();
 
 	UE_LOG(LogTemp,Warning,TEXT("WEBS: Countdown started! 5"));
 
@@ -237,6 +247,7 @@ void AWebsGameMode::UpdateCountdown()
 	}
 
 	WebsGameState->CountdownRemaining--;
+	WebsGameState->NotifyMatchDataChanged();
 
 	UE_LOG(LogTemp,Warning,TEXT("WEBS: Countdown: %d"),WebsGameState->CountdownRemaining);
 

@@ -9,6 +9,7 @@
 #include "DrawDebugHelpers.h"
 #include "Characters/WebsCharacter.h"
 #include "Gameplay/WebsSilkComponent.h"
+#include "Framework/WebsGameState.h"
 
 
 UWebsShootingComponent::UWebsShootingComponent()
@@ -74,6 +75,17 @@ void UWebsShootingComponent::ProcessShot(const FVector& Start,const FVector& Dir
 
 	if (!OwnerPawn || !OwnerPawn->HasAuthority())
 	{
+		return;
+	}
+	
+	AWebsGameState* WebsGameState =
+	GetWorld()->GetGameState<AWebsGameState>();
+
+	if (!WebsGameState ||
+		WebsGameState->MatchPhase != EWebsMatchPhase::Playing)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("SERVER: Shot rejected - match is not playing"));
+
 		return;
 	}
 	

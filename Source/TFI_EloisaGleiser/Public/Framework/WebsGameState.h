@@ -10,6 +10,7 @@
 class APlayerState;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnGameplayObjectiveEvent,EQuestObjectiveType, ObjectiveType,FName, TargetID,int32, Amount,APlayerState*, InstigatorPlayer);
+DECLARE_MULTICAST_DELEGATE(FOnMatchDataChanged);
 
 UENUM(BlueprintType)
 enum class EWebsMatchPhase : uint8
@@ -37,9 +38,11 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_MatchPhase,BlueprintReadOnly,Category = "Webs|Match")
 	EWebsMatchPhase MatchPhase = EWebsMatchPhase::Waiting;
 
-	// Tiempo restante, en segundos.
-	UPROPERTY(Replicated, BlueprintReadOnly,Category = "Webs|Match")
+	UPROPERTY(ReplicatedUsing = OnRep_RemainingTime, BlueprintReadOnly, Category = "Webs|Match")
 	int32 RemainingTime = 300;
+
+	UFUNCTION()
+	void OnRep_RemainingTime();
 
 	UFUNCTION()
 	void OnRep_MatchPhase();
@@ -54,6 +57,21 @@ public:
 	UFUNCTION()
 	void OnRep_WinnerPlayerState();
 	
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Webs|Match")
+	UPROPERTY(ReplicatedUsing = OnRep_CountdownRemaining, BlueprintReadOnly, Category = "Webs|Match")
 	int32 CountdownRemaining = 5;
+
+	UFUNCTION()
+	void OnRep_CountdownRemaining();
+	
+	UPROPERTY(ReplicatedUsing = OnRep_MatchIsDraw, BlueprintReadOnly, Category = "Webs|Match")
+	bool bMatchIsDraw = false;
+	
+	void RefreshCharactersMovement();
+	
+	FOnMatchDataChanged OnMatchDataChanged;
+
+	void NotifyMatchDataChanged();
+
+	UFUNCTION()
+	void OnRep_MatchIsDraw();
 };

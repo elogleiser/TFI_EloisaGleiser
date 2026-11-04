@@ -53,6 +53,8 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Webs|Quests")
 	void OnSuccessfulStun(AActor* StunnedActor);
+	
+	void UpdateMovementForMatchPhase();
 
 
 	
@@ -79,6 +81,10 @@ protected:
 	
 	// Modo de movimiento anterior al stun
 	EMovementMode MovementModeBeforeStun = MOVE_Walking;
+
+	bool bMovementLockedByMatch = false;
+	
+	bool bMovementStateInitialized = false;
 
 public:
 	// Called every frame
