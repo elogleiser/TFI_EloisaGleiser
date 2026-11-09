@@ -54,6 +54,8 @@ void AWebsPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	
 	DOREPLIFETIME(AWebsPlayerState, CapturedZones);
 	DOREPLIFETIME(AWebsPlayerState, TotalScore);
+	DOREPLIFETIME(AWebsPlayerState, PlayerColor);
+
 }
 
 void AWebsPlayerState::UpdateLocalHUD()
@@ -111,3 +113,22 @@ void AWebsPlayerState::OnRep_TotalScore()
  {
 	UpdateLocalScoreboard();
  }
+
+void AWebsPlayerState::SetPlayerColor(const FLinearColor& NewColor)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	PlayerColor = NewColor;
+
+	// OnRep no se ejecuta automáticamente en el servidor
+	OnRep_PlayerColor();
+}
+
+void AWebsPlayerState::OnRep_PlayerColor()
+{
+	UE_LOG(LogTemp, Warning,TEXT("WEBS: Player %s received color %s"),*GetPlayerName(),*PlayerColor.ToString());
+	OnPlayerColorChanged.Broadcast();
+}

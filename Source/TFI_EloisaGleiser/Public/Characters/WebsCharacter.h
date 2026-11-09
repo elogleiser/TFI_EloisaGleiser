@@ -11,6 +11,7 @@
 class UWebsSilkComponent;
 class UWebsQuestComponent;
 class UWebsShootingComponent;
+class UMaterialInstanceDynamic;
 
 UCLASS()
 class TFI_ELOISAGLEISER_API AWebsCharacter : public ATFI_EloisaGleiserCharacter
@@ -55,6 +56,10 @@ public:
 	void OnSuccessfulStun(AActor* StunnedActor);
 	
 	void UpdateMovementForMatchPhase();
+	
+	virtual void OnRep_PlayerState() override;
+	
+	virtual void PossessedBy(AController* NewController) override;
 
 
 	
@@ -85,6 +90,18 @@ protected:
 	bool bMovementLockedByMatch = false;
 	
 	bool bMovementStateInitialized = false;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<UMaterialInstanceDynamic> DynamicBodyMaterial = nullptr;
+
+	void UpdatePlayerAppearance();
+	
+	void BindPlayerColor();
+	
+	UPROPERTY(Transient)
+	TObjectPtr<class AWebsPlayerState> BoundColorPlayerState = nullptr;
+	
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	// Called every frame

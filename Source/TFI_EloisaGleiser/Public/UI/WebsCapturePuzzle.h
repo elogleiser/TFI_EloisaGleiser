@@ -48,12 +48,7 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> BTN_Exit;
 	
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UButton> BTN_FakeComplete;
-	
 	UFUNCTION()
 	void OnExitClicked();
 	
-	UFUNCTION()
-	void OnFakeCompleteClicked();
 };

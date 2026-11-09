@@ -16,11 +16,6 @@ void UWebsCapturePuzzle::NativeOnInitialized()
 		BTN_Exit->OnClicked.AddDynamic(this,&UWebsCapturePuzzle::OnExitClicked);
 	}
 
-	if (BTN_FakeComplete)
-	{
-		BTN_FakeComplete->OnClicked.AddDynamic(this,&UWebsCapturePuzzle::OnFakeCompleteClicked);
-	}
-
 	// Escuchar cuando el jugador termina de dibujar
 	if (DrawingCanvas)
 	{
@@ -34,12 +29,6 @@ void UWebsCapturePuzzle::OnExitClicked()
 	OnExitRequested.Broadcast();
 }
 
-void UWebsCapturePuzzle::OnFakeCompleteClicked()
-{
-	OnPuzzleCompleted.Broadcast(
-	   DrawingCanvas->GetNormalizedDrawnPoints()
-   );
-}
 
 void UWebsCapturePuzzle::HandleDrawingFinished(float Accuracy)
 {

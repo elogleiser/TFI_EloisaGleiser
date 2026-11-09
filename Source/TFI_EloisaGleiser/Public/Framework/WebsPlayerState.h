@@ -9,6 +9,9 @@
 /**
  * 
  */
+
+DECLARE_MULTICAST_DELEGATE(FOnPlayerColorChanged);
+
 UCLASS()
 class TFI_ELOISAGLEISER_API AWebsPlayerState : public APlayerState
 {
@@ -29,8 +32,15 @@ public:
 	int32 GetTotalScore() const { return TotalScore; }
 
 	void AddScore(int32 Points);
+	
 	void RemoveScore(int32 Points);
 	
+	UFUNCTION(BlueprintPure, Category = "Webs|Appearance")
+	FLinearColor GetPlayerColor() const { return PlayerColor; }
+	
+	void SetPlayerColor(const FLinearColor& NewColor);
+	
+	FOnPlayerColorChanged OnPlayerColorChanged;
 
 
 
@@ -52,4 +62,10 @@ private:
 
 	UFUNCTION()
 	void OnRep_TotalScore();
+	
+	UPROPERTY(ReplicatedUsing = OnRep_PlayerColor,VisibleAnywhere, Category = "Webs|Appearance")
+	FLinearColor PlayerColor = FLinearColor::White;
+
+	UFUNCTION()
+	void OnRep_PlayerColor();
 };

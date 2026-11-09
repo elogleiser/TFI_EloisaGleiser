@@ -32,6 +32,8 @@ public:
 	void RegisterPlayerReady(APlayerController* PlayerController);
 	
 	void CheckWinCondition();
+	
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 protected:
 

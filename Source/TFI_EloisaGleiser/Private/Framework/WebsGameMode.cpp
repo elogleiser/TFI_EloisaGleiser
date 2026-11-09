@@ -258,3 +258,61 @@ void AWebsGameMode::UpdateCountdown()
 		StartWebsMatch();
 	}
 }
+
+void AWebsGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	if (!NewPlayer)
+	{
+		return;
+	}
+
+	AWebsPlayerState* WebsPlayerState =NewPlayer->GetPlayerState<AWebsPlayerState>();
+
+	if (!WebsPlayerState)
+	{
+		return;
+	}
+
+	// Paleta para los cuatro jugadores
+	const TArray<FLinearColor> PlayerColors =
+	{
+		FLinearColor::FromSRGBColor(FColor(88, 38, 143)),  // Violeta oscuro
+		FLinearColor::FromSRGBColor(FColor(8, 119, 123)),  // Turquesa oscuro
+		FLinearColor::FromSRGBColor(FColor(163, 75, 10)),  // Naranja oscuro
+		FLinearColor::FromSRGBColor(FColor(163, 41, 96))   // Rosa oscuro
+	};
+
+	// Buscar colores que ya estén asignados
+	TArray<FLinearColor> UsedColors;
+
+	if (AWebsGameState* WebsGameState =GetGameState<AWebsGameState>())
+	{
+		for (APlayerState* Player : WebsGameState->PlayerArray)
+		{
+			AWebsPlayerState* OtherPlayer =Cast<AWebsPlayerState>(Player);
+
+			if (OtherPlayer &&
+				OtherPlayer != WebsPlayerState)
+			{
+				UsedColors.Add(OtherPlayer->GetPlayerColor());
+			}
+		}
+	}
+
+	// Asignar el primer color disponible
+	for (const FLinearColor& Color : PlayerColors)
+	{
+		if (!UsedColors.Contains(Color))
+		{
+			WebsPlayerState->SetPlayerColor(Color);
+
+			UE_LOG(LogTemp, Warning,TEXT("WEBS: Assigned color %s to player %s"),*Color.ToString(),*WebsPlayerState->GetPlayerName());
+
+			return;
+		}
+	}
+
+	UE_LOG(LogTemp, Warning,TEXT("WEBS: No available player colors"));
+}

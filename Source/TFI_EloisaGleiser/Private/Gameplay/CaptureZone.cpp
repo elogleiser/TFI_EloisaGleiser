@@ -134,6 +134,7 @@ void ACaptureZone::OnRep_OccupyingPlayer()
 
 void ACaptureZone::OnRep_OwningPlayer()
 {
+	BindOwnerColor();
 }
 
 void ACaptureZone::CaptureZone(AWebsPlayerState* CapturingPlayer)
@@ -145,8 +146,7 @@ void ACaptureZone::CaptureZone(AWebsPlayerState* CapturingPlayer)
 	
 	AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
 
-	if (!WebsGameState ||
-		WebsGameState->MatchPhase != EWebsMatchPhase::Playing)
+	if (!WebsGameState ||WebsGameState->MatchPhase != EWebsMatchPhase::Playing)
 	{
 		return;
 	}
@@ -174,6 +174,8 @@ void ACaptureZone::CaptureZone(AWebsPlayerState* CapturingPlayer)
 
 	// Asignar nuevo dueño
 	OwningPlayer = CapturingPlayer;
+	
+	BindOwnerColor();
 
 	// Nuevo dueño suma una zona y sus puntos
 	CapturingPlayer->AddCapturedZone();
@@ -210,4 +212,54 @@ void ACaptureZone::CaptureZone(AWebsPlayerState* CapturingPlayer)
 bool ACaptureZone::IsOccupiedBy(const AWebsPlayerState* PlayerState) const
 {
 	return OccupyingPlayer == PlayerState;
+}
+
+void ACaptureZone::UpdateZoneAppearance()
+{
+	FLinearColor ZoneColor = FLinearColor::White;
+
+	if (IsValid(OwningPlayer))
+	{
+		ZoneColor = OwningPlayer->GetPlayerColor();
+	}
+
+	OnZoneOwnerChanged.Broadcast(ZoneColor);
+}
+
+void ACaptureZone::BindOwnerColor()
+{
+	// Desconectarse del propietario anterior
+	if (IsValid(BoundColorPlayerState))
+	{
+		BoundColorPlayerState->OnPlayerColorChanged.RemoveAll(this);
+	}
+
+	BoundColorPlayerState = OwningPlayer;
+
+	// Escuchar los cambios de color del nuevo propietario
+	if (IsValid(BoundColorPlayerState))
+	{
+		BoundColorPlayerState->OnPlayerColorChanged.AddUObject(this,&ACaptureZone::UpdateZoneAppearance);
+	}
+
+	// Aplicar el color disponible actualmente
+	UpdateZoneAppearance();
+}
+
+void ACaptureZone::RefreshZoneAppearance()
+{
+	BindOwnerColor();
+}
+
+void ACaptureZone::EndPlay(
+	const EEndPlayReason::Type EndPlayReason)
+{
+	if (IsValid(BoundColorPlayerState))
+	{
+		BoundColorPlayerState->OnPlayerColorChanged.RemoveAll(this);
+	}
+
+	BoundColorPlayerState = nullptr;
+
+	Super::EndPlay(EndPlayReason);
 }

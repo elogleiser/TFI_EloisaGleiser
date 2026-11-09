@@ -10,6 +10,7 @@
 #include "Characters/WebsCharacter.h"
 #include "Gameplay/WebsSilkComponent.h"
 #include "Framework/WebsGameState.h"
+#include "DrawDebugHelpers.h"
 
 
 UWebsShootingComponent::UWebsShootingComponent()
@@ -131,11 +132,17 @@ void UWebsShootingComponent::ProcessShot(const FVector& Start,const FVector& Dir
 	Params.AddIgnoredActor(OwnerPawn);
 
 	const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit,Start,End,ECC_Visibility,Params);
+	
+	const FVector ShotEnd = bHit ? Hit.ImpactPoint : End;
+
+	// Posición aproximada de la boca de la araña
+	const FVector VisualStart =
+		WebsCharacter->GetActorLocation()
+		+ WebsCharacter->GetActorForwardVector() * 60.f
+		+ FVector(0.f, 0.f, 35.f);
+
+	MulticastShotEffect(VisualStart, ShotEnd);
 //
-	DrawDebugLine(GetWorld(),Start,bHit ? Hit.ImpactPoint : End,FColor::Red,false,5.f,0,3.f);
-
-	DrawDebugSphere(GetWorld(),Start,15.f,12,FColor::Yellow,false,5.f);
-
 	UE_LOG(LogTemp, Warning,TEXT("SHOT DEBUG | Start: %s | Direction: %s | End: %s"),*Start.ToString(),*Direction.ToString(),*End.ToString());
 	
 	//
@@ -194,4 +201,11 @@ bool UWebsShootingComponent::ValidateShot(const FVector& Start,const FVector& Di
 	}
 
 	return true;
+}
+
+void UWebsShootingComponent::MulticastShotEffect_Implementation(
+	FVector_NetQuantize Start,
+	FVector_NetQuantize End)
+{
+	DrawDebugLine(GetWorld(),Start,End,FColor::White,false,0.15f,0,2.f);
 }

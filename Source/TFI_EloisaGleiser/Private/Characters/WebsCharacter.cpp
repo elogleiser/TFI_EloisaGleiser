@@ -9,6 +9,8 @@
 #include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
 #include "Framework/WebsGameState.h"
+#include "Framework/WebsPlayerState.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 
 // Sets default values
@@ -178,4 +180,78 @@ void AWebsCharacter::UpdateMovementForMatchPhase()
 	}
 }
 
+void AWebsCharacter::UpdatePlayerAppearance()
+{
+	AWebsPlayerState* WebsPlayerState =GetPlayerState<AWebsPlayerState>();
 
+	if (!WebsPlayerState || !GetMesh())
+	{
+		return;
+	}
+
+	// Crear una instancia dinámica únicamente una vez
+	if (!DynamicBodyMaterial)
+	{
+		DynamicBodyMaterial =GetMesh()->CreateDynamicMaterialInstance(0);
+	}
+
+	if (!DynamicBodyMaterial)
+	{
+		return;
+	}
+
+	DynamicBodyMaterial->SetVectorParameterValue(TEXT("BaseColorFactor"),WebsPlayerState->GetPlayerColor()
+	);
+}
+
+void AWebsCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	BindPlayerColor();
+}
+
+void AWebsCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	BindPlayerColor();
+}
+
+void AWebsCharacter::BindPlayerColor()
+{
+	AWebsPlayerState* WebsPlayerState =GetPlayerState<AWebsPlayerState>();
+
+	if (BoundColorPlayerState == WebsPlayerState)
+	{
+		return;
+	}
+
+	// Desconectar del PlayerState anterior, si existía
+	if (IsValid(BoundColorPlayerState))
+	{
+		BoundColorPlayerState->OnPlayerColorChanged.RemoveAll(this);
+	}
+
+	BoundColorPlayerState = WebsPlayerState;
+
+	if (IsValid(BoundColorPlayerState))
+	{
+		BoundColorPlayerState->OnPlayerColorChanged.AddUObject(this,&AWebsCharacter::UpdatePlayerAppearance);
+	}
+
+	// Aplicar el color que ya tenga replicado
+	UpdatePlayerAppearance();
+}
+
+void AWebsCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (IsValid(BoundColorPlayerState))
+	{
+		BoundColorPlayerState->OnPlayerColorChanged.RemoveAll(this);
+	}
+
+	BoundColorPlayerState = nullptr;
+
+	Super::EndPlay(EndPlayReason);
+}

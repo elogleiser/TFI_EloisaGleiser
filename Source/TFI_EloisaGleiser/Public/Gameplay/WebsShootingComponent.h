@@ -22,6 +22,9 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerTryShoot(FVector_NetQuantize Start, FVector_NetQuantizeNormal Direction);
 	
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastShotEffect(FVector_NetQuantize Start,FVector_NetQuantize End);
+	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
