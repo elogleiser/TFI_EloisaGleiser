@@ -131,7 +131,9 @@ void UWebsShootingComponent::ProcessShot(const FVector& Start,const FVector& Dir
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(OwnerPawn);
 
-	const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit,Start,End,ECC_Visibility,Params);
+	//const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit,Start,End,ECC_Visibility,Params);
+
+	const bool bHit = GetWorld()->SweepSingleByChannel(Hit,Start,End,FQuat::Identity,ECC_Visibility,FCollisionShape::MakeSphere(ShotRadius),Params);
 	
 	const FVector ShotEnd = bHit ? Hit.ImpactPoint : End;
 
@@ -207,5 +209,5 @@ void UWebsShootingComponent::MulticastShotEffect_Implementation(
 	FVector_NetQuantize Start,
 	FVector_NetQuantize End)
 {
-	DrawDebugLine(GetWorld(),Start,End,FColor::White,false,0.15f,0,2.f);
+	DrawDebugLine(GetWorld(),Start,End,FColor::White,false,0.15f,0,5.f);
 }

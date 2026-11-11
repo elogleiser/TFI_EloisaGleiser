@@ -18,6 +18,7 @@ class UWebsQuestTrackerWidget;
 struct FWebsQuestRuntime;
 class UVerticalBox;
 class UBorder;
+class UButton;
 
 UCLASS()
 class TFI_ELOISAGLEISER_API UWebsHUDWidget : public UUserWidget
@@ -91,15 +92,12 @@ private:
 
 	void HideCaptureMessage();
 	
-	// Contenedor de las misiones en el HUD
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UVerticalBox> VB_QuestList;
-
-	// Clase del widget que representa una mision
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Quests")
 	TSubclassOf<UWebsQuestTrackerWidget> QuestTrackerWidgetClass;
-
-	// Widgets creados, identificados por QuestID
+	
 	UPROPERTY(Transient)
 	TMap<FName, TObjectPtr<UWebsQuestTrackerWidget>> QuestWidgets;
 	
@@ -114,5 +112,14 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> Text_FinalScore;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> BTN_MainMenu;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> Text_WaitingPlayers;
+	
+	UFUNCTION()
+	void OnMainMenuClicked();
 	
 };

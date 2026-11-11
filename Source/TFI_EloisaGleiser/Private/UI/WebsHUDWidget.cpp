@@ -11,6 +11,8 @@
 #include "Components/VerticalBox.h"
 #include "Components/Border.h"
 #include "GameFramework/PlayerController.h"
+#include "Components/Button.h"
+#include "Framework/WebsPlayerController.h"
 
 
 void UWebsHUDWidget::UpdateCapturedZones(int32 NewCapturedZones)
@@ -37,8 +39,7 @@ void UWebsHUDWidget::UpdateScoreboard()
 		TXT_Player3,
 		TXT_Player4
 	};
-
-	// Primero ocultamos todas las filas.
+	
 	for (UTextBlock* PlayerText : PlayerTexts)
 	{
 		if (PlayerText)
@@ -58,9 +59,37 @@ void UWebsHUDWidget::UpdateScoreboard()
 			continue;
 		}
 
-		const FString ScoreText = FString::Printf(TEXT("Player %d: %d"),i + 1,WebsPlayerState->GetTotalScore());
+		FString PlayerName = TEXT("Player");
+
+		const FLinearColor PlayerColor =
+			WebsPlayerState->GetPlayerColor();
+
+		if (PlayerColor == FLinearColor::FromSRGBColor(FColor(88, 38, 143)))
+		{
+			PlayerName = TEXT("Violet");
+		}
+		else if (PlayerColor == FLinearColor::FromSRGBColor(FColor(8, 119, 123)))
+		{
+			PlayerName = TEXT("Cyan");
+		}
+		else if (PlayerColor == FLinearColor::FromSRGBColor(FColor(163, 75, 10)))
+		{
+			PlayerName = TEXT("Orange");
+		}
+		else if (PlayerColor == FLinearColor::FromSRGBColor(FColor(163, 41, 96)))
+		{
+			PlayerName = TEXT("Pink");
+		}
+
+		const FString ScoreText = FString::Printf(
+			TEXT("%s: %d"),
+			*PlayerName,
+			WebsPlayerState->GetTotalScore()
+		);
 
 		PlayerTexts[i]->SetText(FText::FromString(ScoreText));
+		
+		PlayerTexts[i]->SetColorAndOpacity(FSlateColor(WebsPlayerState->GetPlayerColor()));
 
 		PlayerTexts[i]->SetVisibility(ESlateVisibility::Visible);
 	}
@@ -128,16 +157,14 @@ void UWebsHUDWidget::UpdateQuestTracker(const FWebsQuestRuntime& QuestData)
 	}
 
 	const FName QuestID = QuestData.QuestID;
-
-	// Buscar si ya existe un widget para esta misión.
+	
 	UWebsQuestTrackerWidget* QuestWidget = nullptr;
 
 	if (TObjectPtr<UWebsQuestTrackerWidget>* FoundWidget = QuestWidgets.Find(QuestID))
 	{
 		QuestWidget = FoundWidget->Get();
 	}
-
-	// Si todavía no existe, crear uno nuevo.
+	
 	if (!IsValid(QuestWidget))
 	{
 		QuestWidget = CreateWidget<UWebsQuestTrackerWidget>(GetOwningPlayer(),QuestTrackerWidgetClass);
@@ -151,8 +178,7 @@ void UWebsHUDWidget::UpdateQuestTracker(const FWebsQuestRuntime& QuestData)
 
 		QuestWidgets.Add(QuestID, QuestWidget);
 	}
-
-	// Actualizar únicamente la misión correspondiente.
+	
 	QuestWidget->UpdateQuestDisplay(QuestData);
 }
 
@@ -172,8 +198,19 @@ void UWebsHUDWidget::UpdateMatchHUD()
 	{
 		return;
 	}
+	
+	if (Text_WaitingPlayers)
+	{
+		const bool bWaiting =
+			WebsGameState->MatchPhase == EWebsMatchPhase::Waiting;
 
-	// Mostrar la cuenta regresiva antes de comenzar.
+		Text_WaitingPlayers->SetVisibility(
+			bWaiting
+				? ESlateVisibility::Visible
+				: ESlateVisibility::Collapsed
+		);
+	}
+	
 	if (Text_Countdown)
 	{
 		if (WebsGameState->MatchPhase == EWebsMatchPhase::Countdown)
@@ -187,8 +224,7 @@ void UWebsHUDWidget::UpdateMatchHUD()
 			Text_Countdown->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
-
-	// Mostrar el cronómetro de la partida.
+	
 	if (Text_MatchTimer)
 	{
 		const int32 TotalSeconds =FMath::Max(0, WebsGameState->RemainingTime);
@@ -207,6 +243,11 @@ void UWebsHUDWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
+	if (BTN_MainMenu)
+	{
+		BTN_MainMenu->OnClicked.AddUniqueDynamic(this,&UWebsHUDWidget::OnMainMenuClicked);
+	}
+	
 	AWebsGameState* WebsGameState =GetWorld()->GetGameState<AWebsGameState>();
 
 	if (WebsGameState)
@@ -215,8 +256,7 @@ void UWebsHUDWidget::NativeConstruct()
 
 		WebsGameState->OnMatchDataChanged.AddUObject(this,&UWebsHUDWidget::HandleMatchDataChanged);
 	}
-
-	// Actualizar los textos con el estado actual.
+	
 	HandleMatchDataChanged();
 }
 
@@ -251,15 +291,13 @@ void UWebsHUDWidget::UpdateMatchResult()
     {
         return;
     }
-
-    // Ocultar el panel mientras la partida no haya terminado.
+	
     if (WebsGameState->MatchPhase != EWebsMatchPhase::Finished)
     {
         Border_MatchResult->SetVisibility(ESlateVisibility::Collapsed);
         return;
     }
-
-    // Obtener el jugador local.
+	
     APlayerController* LocalController = GetOwningPlayer();
 
     if (!LocalController)
@@ -281,10 +319,8 @@ void UWebsHUDWidget::UpdateMatchResult()
 	{
 		return;
 	}
-
-    // Comparar el ganador con el jugador local.
-    const bool bIsWinner =
-        WebsGameState->WinnerPlayerState == LocalPlayerState;
+	
+    const bool bIsWinner =WebsGameState->WinnerPlayerState == LocalPlayerState;
 
 	if (Text_ResultTitle)
 	{
@@ -308,5 +344,21 @@ void UWebsHUDWidget::UpdateMatchResult()
 	}
 
     Border_MatchResult->SetVisibility(ESlateVisibility::Visible);
+	
+	FInputModeGameAndUI InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+	LocalController->SetInputMode(InputMode);
+	LocalController->SetShowMouseCursor(true);
+}
+
+void UWebsHUDWidget::OnMainMenuClicked()
+{
+	AWebsPlayerController* WebsController =Cast<AWebsPlayerController>(GetOwningPlayer());
+
+	if (WebsController)
+	{
+		WebsController->RequestReturnToMainMenu();
+	}
 }
 

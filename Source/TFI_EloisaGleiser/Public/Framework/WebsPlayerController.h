@@ -83,6 +83,9 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Webs|Interaction")
 	void ExecuteInteraction(AActor* InteractableActor);
+	
+	UFUNCTION(BlueprintCallable, Category="Webs|UI")
+	void RequestReturnToMainMenu();
 
 protected:
 	

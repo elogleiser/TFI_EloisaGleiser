@@ -204,16 +204,7 @@ void AWebsGameMode::CheckAllPlayersReady()
 		return;
 	}
 
-	// Todavía faltan jugadores.
-	if (ReadyPlayers.Num() < RequiredPlayers)
-	{
-		return;
-	}
-
-	UE_LOG(LogTemp,Warning,TEXT("WEBS: All players ready! Starting countdown..."));
-	
-	StartCountdown();
-	
+	CheckPlayerJoinWait();
 }
 
 
@@ -315,4 +306,75 @@ void AWebsGameMode::PostLogin(APlayerController* NewPlayer)
 	}
 
 	UE_LOG(LogTemp, Warning,TEXT("WEBS: No available player colors"));
+}
+
+void AWebsGameMode::StartPlayerJoinWait()
+{
+	AWebsGameState* WebsGameState = GetGameState<AWebsGameState>();
+
+	if (!WebsGameState ||WebsGameState->MatchPhase != EWebsMatchPhase::Waiting ||GetWorldTimerManager().IsTimerActive(PlayerJoinTimerHandle))
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning,TEXT("WEBS: Waiting %d seconds for more players..."),PlayerJoinWaitTime);
+
+	GetWorldTimerManager().SetTimer(PlayerJoinTimerHandle,this,&AWebsGameMode::FinishPlayerJoinWait,PlayerJoinWaitTime,false);
+}
+
+void AWebsGameMode::FinishPlayerJoinWait()
+{
+	GetWorldTimerManager().ClearTimer(PlayerJoinTimerHandle);
+
+	AWebsGameState* WebsGameState = GetGameState<AWebsGameState>();
+
+	if (!WebsGameState ||WebsGameState->MatchPhase != EWebsMatchPhase::Waiting)
+	{
+		return;
+	}
+	
+	if (ReadyPlayers.Num() < RequiredPlayers)
+	{
+		return;
+	}
+
+	StartCountdown();
+}
+
+void AWebsGameMode::CheckPlayerJoinWait()
+{
+	AWebsGameState* WebsGameState = GetGameState<AWebsGameState>();
+
+	if (!WebsGameState ||WebsGameState->MatchPhase != EWebsMatchPhase::Waiting)
+	{
+		return;
+	}
+
+	const int32 PlayerCount = ReadyPlayers.Num();
+
+	if (PlayerCount < RequiredPlayers)
+	{
+		GetWorldTimerManager().ClearTimer(PlayerJoinTimerHandle);
+		return;
+	}
+
+	if (PlayerCount >= MaxPlayers)
+	{
+		FinishPlayerJoinWait();
+		return;
+	}
+	
+	StartPlayerJoinWait();
+}
+
+void AWebsGameMode::Logout(AController* Exiting)
+{
+	if (APlayerController* ExitingPlayer =Cast<APlayerController>(Exiting))
+	{
+		ReadyPlayers.Remove(ExitingPlayer);
+	}
+
+	Super::Logout(Exiting);
+
+	CheckPlayerJoinWait();
 }

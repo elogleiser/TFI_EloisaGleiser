@@ -37,6 +37,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Webs|Shooting")
 	int32 ShootSilkCost = 10;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Webs|Shooting")
+	float ShotRadius = 25.0f;
+	
 	bool ValidateShot(const FVector& Start,const FVector& Direction) const;
 
 public:

@@ -24,10 +24,25 @@
 #include "Components/SphereComponent.h"
 #include "Framework/WebsGameMode.h"
 #include "Framework/WebsGameState.h"
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
 
 void AWebsPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	const FString CurrentLevelName =UGameplayStatics::GetCurrentLevelName(this, true);
+	
+	if (CurrentLevelName == TEXT("L_MainMenu") ||CurrentLevelName == TEXT("Lobby"))
+	{
+		return;
+	}
+
 	
 	if (HUDWidgetClass)
 	{
@@ -39,7 +54,7 @@ void AWebsPlayerController::BeginPlay()
 			HUDWidget->UpdateScoreboard();
 		}
 	}
-	
+
 	InitializeSilkHUD();
 	InitializeQuestHUD();
 	TrySetPlayerReady();
@@ -380,14 +395,24 @@ void AWebsPlayerController::OnResumeRequested()
 
 void AWebsPlayerController::OnMainMenuRequested()
 {
-	if (UGameInstance* GameInstance = GetGameInstance())
-	{
-		if (UMultiplayerSessionsSubsystem* SessionsSubsystem =GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>())
-		{
-			SessionsSubsystem->MultijugadorAlDestruirSesionCompletada.AddDynamic(this,&AWebsPlayerController::OnSessionDestroyed);
+	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
 
-			SessionsSubsystem->DestruirSesion();
-			return;
+	if (OnlineSubsystem)
+	{
+		IOnlineSessionPtr SessionInterface =OnlineSubsystem->GetSessionInterface();
+
+		if (SessionInterface.IsValid() &&SessionInterface->GetNamedSession(NAME_GameSession))
+		{
+			if (UGameInstance* GameInstance = GetGameInstance())
+			{
+				if (UMultiplayerSessionsSubsystem* SessionsSubsystem =GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>())
+				{
+					SessionsSubsystem->MultijugadorAlDestruirSesionCompletada.AddUniqueDynamic(this,&AWebsPlayerController::OnSessionDestroyed);
+
+					SessionsSubsystem->DestruirSesion();
+					return;
+				}
+			}
 		}
 	}
 
@@ -481,11 +506,9 @@ void AWebsPlayerController::InitializeSilkHUD()
 	{
 		return;
 	}
-
-	// Escuchar los cambios de seda
+	
 	SilkComponent->OnSilkChanged.AddUniqueDynamic(this,&AWebsPlayerController::HandleSilkChanged);
-
-	// Mostrar el valor inicial
+	
 	HandleSilkChanged(SilkComponent->GetCurrentSilk(),SilkComponent->GetMaxSilk());	
 }
 
@@ -614,8 +637,7 @@ void AWebsPlayerController::Shoot()
 	{
 		return;
 	}
-
-	// No permitir disparar mientras está aturdido
+	
 	if (WebsCharacter->IsStunned())
 	{
 		UE_LOG(LogTemp, Warning,TEXT("WEB SHOT BLOCKED: Player is stunned"));
@@ -698,4 +720,14 @@ void AWebsPlayerController::ServerSetPlayerReady_Implementation()
 	{
 		WebsGameMode->RegisterPlayerReady(this);
 	}
+}
+
+void AWebsPlayerController::RequestReturnToMainMenu()
+{
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	OnMainMenuRequested();
 }

@@ -29,6 +29,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Webs|Match")
 	int32 RequiredPlayers = 2;
 	
+	// Tiempo de espera para permitir que entren más jugadores.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Webs|Match")
+	int32 PlayerJoinWaitTime = 20;
+
+	// Cantidad máxima de jugadores.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Webs|Match")
+	int32 MaxPlayers = 4;
+	
 	void RegisterPlayerReady(APlayerController* PlayerController);
 	
 	void CheckWinCondition();
@@ -40,7 +48,17 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-
+	
+	FTimerHandle PlayerJoinTimerHandle;
+	
+	void StartPlayerJoinWait();
+	
+	void FinishPlayerJoinWait();
+	
+	void CheckPlayerJoinWait();
+	
+	virtual void Logout(AController* Exiting) override;
+	
 	FTimerHandle MatchTimerHandle;
 
 	void StartWebsMatch();
@@ -51,11 +69,9 @@ private:
 	
 	void FinishMatchByTime();
 	
-	// Jugadores que confirmaron estar listos.
 	UPROPERTY()
 	TSet<TObjectPtr<APlayerController>> ReadyPlayers;
-
-	// Comprueba si podemos iniciar la cuenta regresiva.
+	
 	void CheckAllPlayersReady();
 	
 	FTimerHandle CountdownTimerHandle;
@@ -63,5 +79,7 @@ private:
 	void StartCountdown();
 	
 	void UpdateCountdown();
+	
+	
 	
 };

@@ -13,7 +13,6 @@
 #include "Materials/MaterialInstanceDynamic.h"
 
 
-// Sets default values
 AWebsCharacter::AWebsCharacter()
 {
 
@@ -55,6 +54,8 @@ void AWebsCharacter::ApplyStun(float Duration)
 	bIsStunned = true;
 
 	UpdateStunMovement();
+	
+	UpdatePlayerAppearance();
 
 	GetWorldTimerManager().ClearTimer(StunTimerHandle);
 
@@ -71,11 +72,13 @@ void AWebsCharacter::EndStun()
 	bIsStunned = false;
 
 	UpdateStunMovement();
+	UpdatePlayerAppearance();
 }
 
 void AWebsCharacter::OnRep_IsStunned()
 {
 	UpdateStunMovement();
+	UpdatePlayerAppearance();
 }
 
 
@@ -200,8 +203,22 @@ void AWebsCharacter::UpdatePlayerAppearance()
 		return;
 	}
 
-	DynamicBodyMaterial->SetVectorParameterValue(TEXT("BaseColorFactor"),WebsPlayerState->GetPlayerColor()
-	);
+	// Obtener el color original del jugador
+	FLinearColor DisplayColor =WebsPlayerState->GetPlayerColor();
+
+	// Si está stuneado, desaturar el color
+	if (bIsStunned)
+	{
+		const float Gray = DisplayColor.GetLuminance();
+
+		const FLinearColor GrayColor(Gray,Gray,Gray,1.0f);
+
+		// 15% del color original y 85% gris
+		DisplayColor = FMath::Lerp(GrayColor,DisplayColor,0.15f);
+	}
+
+	// Aplicar el color visual al material
+	DynamicBodyMaterial->SetVectorParameterValue(TEXT("BaseColorFactor"),DisplayColor);
 }
 
 void AWebsCharacter::OnRep_PlayerState()
