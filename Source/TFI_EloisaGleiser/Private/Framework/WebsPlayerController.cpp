@@ -472,15 +472,6 @@ void AWebsPlayerController::UpdateScoreboardHUD()
 
 void AWebsPlayerController::HandleSilkChanged(int32 CurrentSilk, int32 MaxSilk)
 {
-	/*if (!IsLocalController())
-	{
-		return;
-	}
-
-	if (HUDWidget)
-	{
-		HUDWidget->UpdateSilk(CurrentSilk, MaxSilk);
-	}*/
 	if (!IsLocalController())
 	{
 		return;

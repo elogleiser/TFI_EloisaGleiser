@@ -27,11 +27,11 @@ public:
 	
 	// Cantidad de jugadores que deben estar listos para iniciar.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Webs|Match")
-	int32 RequiredPlayers = 2;
+	int32 RequiredPlayers = 1;
 	
 	// Tiempo de espera para permitir que entren más jugadores.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Webs|Match")
-	int32 PlayerJoinWaitTime = 20;
+	int32 PlayerJoinWaitTime = 15;
 
 	// Cantidad máxima de jugadores.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Webs|Match")
