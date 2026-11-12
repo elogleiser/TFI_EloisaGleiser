@@ -343,10 +343,12 @@ void UWebsHUDWidget::UpdateMatchResult()
 		Text_FinalScore->SetText(FText::FromString(FString::Printf(TEXT("FINAL SCORE: %d"),FinalScore)));
 	}
 
-    Border_MatchResult->SetVisibility(ESlateVisibility::Visible);
-	
+	Border_MatchResult->SetVisibility(ESlateVisibility::Visible);
+
 	FInputModeGameAndUI InputMode;
+	InputMode.SetWidgetToFocus(TakeWidget());
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	InputMode.SetHideCursorDuringCapture(false);
 
 	LocalController->SetInputMode(InputMode);
 	LocalController->SetShowMouseCursor(true);

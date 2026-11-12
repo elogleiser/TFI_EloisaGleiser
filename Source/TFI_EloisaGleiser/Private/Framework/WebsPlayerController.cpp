@@ -434,7 +434,14 @@ void AWebsPlayerController::OnSessionDestroyed(bool bWasSuccessful)
 
 void AWebsPlayerController::ReturnToMainMenu()
 {
-	UGameplayStatics::OpenLevel(this,FName(TEXT("L_MainMenu")));
+	if (GetNetMode() == NM_Client)
+	{
+		ClientTravel(TEXT("/Game/Maps/L_MainMenu"), TRAVEL_Absolute);
+	}
+	else
+	{
+		UGameplayStatics::OpenLevel(this, FName(TEXT("L_MainMenu")));
+	}
 }
 
 void AWebsPlayerController::UpdateCapturedZonesHUD(int32 NewCapturedZones)
