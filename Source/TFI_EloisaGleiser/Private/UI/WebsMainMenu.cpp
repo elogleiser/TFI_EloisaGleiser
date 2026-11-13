@@ -56,7 +56,7 @@ void UWebsMainMenu::OnOnlineClicked()
 		WBP_MenuWidgetOW->ConfigurarMenu(
 			4,
 			TEXT("Webs"),
-			TEXT("/Game/Maps/Lobby")
+			TEXT("/Game/Maps/Test_Level")
 		);
 	}
 }
